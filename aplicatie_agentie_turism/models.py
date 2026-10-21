@@ -68,7 +68,11 @@ class Furnizor(models.Model):
 
     email_contact = models.EmailField(null=True, blank=True) 
     site_web = models.URLField(null=True, blank=True)
-    telefon_contact = models.CharField(max_length=20, help_text="Includeți prefixul internațional (ex: +40).")
+    telefon_contact = models.CharField(
+        max_length=20, 
+        help_text="Va rugam sa includeți prefixul internațional al numarului de telefon (ex: +40).",
+        error_messages={'max_length': 'Numărul de telefon introdus este prea lung. Maximum 20 de caractere sunt permise.'}
+    )
 
     class Meta:
         ordering = ['nume_furnizor']
