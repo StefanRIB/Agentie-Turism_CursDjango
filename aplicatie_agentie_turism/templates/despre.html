@@ -1,0 +1,18 @@
+{% extends 'baza.html' %}
+{% load static %}
+
+{% block title %}Despre Noi - Zbor & Dor{% endblock %}
+
+{% block content %}
+    <section id="echipa-noastra">
+        <h1>Echipa Zbor & Dor</h1>
+        <p>Suntem o echipă pasionată de călătorii, cu o vastă experiență în planificarea vacanțelor de neuitat. Ne dedicăm timpul pentru a găsi cele mai bune zboruri și cazări, astfel încât dorul tău de ducă să fie pe deplin satisfăcut.</p>
+        
+        <img src="{% static 'imagini/echipa.jpeg' %}" alt="Echipa agenției Zbor & Dor" width="600" style="border-radius: 8px; margin-top: 15px;">
+    </section>
+
+    <section id="misiune">
+        <h2>Misiunea Noastră</h2>
+        <p>Ne dorim să transformăm visurile clienților noștri în realitate prin servicii premium, asistență dedicată 24/7 și pachete turistice complet personalizate, adaptate nevoilor fiecărui călător.</p>
+    </section>
+{% endblock %}

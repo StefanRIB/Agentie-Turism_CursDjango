@@ -13,7 +13,7 @@ class MiddlewareNou:
     def __call__(self, request):
         # cod de procesare a cererii ....      
         #putem trimite date către funcția de vizualizare; le setăm ca proprietăți în request     
-        request.proprietate_noua=17  
+        # request.proprietate_noua=17  
         request.ip=get_ip(request)     
         # se apelează indirect funcția de vizualizare (din views.py)
         response = self.get_response(request)      
@@ -23,22 +23,22 @@ class MiddlewareNou:
        
         #verificăm tipul de conținut folosind headerul HTTP Content-Type
         # putem transmite divere resurse (imagini, css etc.), nu doar html-uri
-        if response.has_header('Content-Type') and 'text/html' in response['Content-Type']:
+        # if response.has_header('Content-Type') and 'text/html' in response['Content-Type']:
            
-            # obținem conținutul raspunsului
-            # (response.content este memorat sub forma de bytes -> transformăm în string
-            content = response.content.decode('utf-8')
+        #     # obținem conținutul raspunsului
+        #     # (response.content este memorat sub forma de bytes -> transformăm în string
+        #     content = response.content.decode('utf-8')
            
-            # Modificăm conținutul raspunsului generat din views
-            new_content = content.replace(
-                '</body>',
-                f'<div>Continut suplimentar {request.ip}</div></body>'
-            )
+        #     # Modificăm conținutul raspunsului generat din views
+        #     new_content = content.replace(
+        #         '</body>',
+        #         f'<div>Continut suplimentar {request.ip}</div></body>'
+        #     )
            
-            # Suprascriem conținutul răspunsului (in obiectul response)
-            response.content = new_content.encode('utf-8')
+        #     # Suprascriem conținutul răspunsului (in obiectul response)
+        #     response.content = new_content.encode('utf-8')
            
-            # Actualizăm lungimea conținutului -> obligatoriu pentru headerele HTTP
-            response['Content-Length'] = len(response.content)
+        #     # Actualizăm lungimea conținutului -> obligatoriu pentru headerele HTTP
+        #     response['Content-Length'] = len(response.content)
        
         return response

@@ -56,13 +56,14 @@ ROOT_URLCONF = "proiect_agentie_turism.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "aplicatie_agentie_turism.ctx_processors.informatii_firma",
             ],
         },
     },
@@ -126,6 +127,10 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
 
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
@@ -134,4 +139,13 @@ MAILERS = {
     "default": {
         "BACKEND": "django.core.mail.backends.console.EmailBackend",
     },
+}
+
+DATE_FIRMA = {
+    'nume_firma': 'Agenția de Turism Zbor & Dor',
+    'an_infiintare': 2015,
+    'telefon': '+40 712 345 678',
+    'adresa': 'Bulevardul Republicii nr. 10, Ploiești',
+    'email_contact': 'contact@zborsidor.ro', 
+    'cui': 'RO12345678'                          
 }

@@ -1,0 +1,44 @@
+{% extends 'baza.html' %}
+{% load static %}
+
+{% block title %}Produse - Zbor & Dor{% endblock %}
+
+{% block content %}
+    <section class="sectiune-produse">
+        <h1 class="titlu-pagina">Catalog Servicii Turistice</h1>
+
+        {% if eroare %}
+            <div class="mesaj-eroare">
+                <strong>Atenție:</strong> {{ eroare }}
+            </div>
+        {% endif %}
+
+        <p class="text-paginare">
+            Pagina {{ pagina.number }} din {{ pagina.paginator.num_pages }}
+        </p>
+
+        <div class="grid-produse">
+            {% for prod in pagina.object_list %}
+                <div class="card-produs">
+                    <h3>{{ prod.nume_serviciu }}</h3>
+                    <p><strong>Preț:</strong> <span class="pret-produs">{{ prod.pret_serviciu }} EUR</span></p>
+                    <p><strong>Locuri disponibile:</strong> {{ prod.stoc_locuri }}</p>
+                    <p class="categorie-produs"><strong>Categorie:</strong> {{ prod.id_categorie.nume }}</p>
+                    <button class="btn-detalii">Vezi detalii</button>
+                </div>
+            {% empty %}
+                <p>Momentan nu există servicii turistice înregistrate în baza de date.</p>
+            {% endfor %}
+        </div>
+
+        <div class="paginare">
+            {% if pagina.has_previous %}
+                <a href="?pagina={{ pagina.previous_page_number }}" class="btn-paginare">« Pagina Anterioară</a>
+            {% endif %}
+            
+            {% if pagina.has_next %}
+                <a href="?pagina={{ pagina.next_page_number }}" class="btn-paginare">Pagina Următoare »</a>
+            {% endif %}      
+        </div>
+    </section>
+{% endblock %}

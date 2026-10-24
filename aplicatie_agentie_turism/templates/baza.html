@@ -1,0 +1,43 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Agenție Turism{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/nav.css' %}">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul class="meniu">
+                <li><a href="{% url 'index' %}">Acasă</a>
+                    <ul class="submeniu">
+                        <li><a href="{% url 'index' %}#oferte-curente">Oferte Curente</a></li>
+                        <li><a href="{% url 'index' %}#orar">Orar de lucru</a></li>
+                    </ul>
+                </li>
+                <li><a href="{% url 'despre' %}">Despre Noi</a></li>
+                <li><a href="{% url 'istoric_site' %}">Istoric</a></li>
+                <li><a href="{% url 'servicii_turism' %}">Produse</a></li>
+                <li><a href="{% url 'contact' %}">Contact</a></li>
+                <li><a href="{% url 'cos_virtual' %}">Coș Virtual</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer>
+        <div class="footer-info">
+            <p>&copy; {{ firma.an_infiintare }} {{ firma.nume_firma }}</p>
+            <p>Tel: {{ firma.telefon }} | Email: {{ firma.email_contact }}</p>
+            <p>Adresa: {{ firma.adresa }} | CUI: {{ firma.cui }}</p>
+        </div>
+        <p>Adresa ta IP este: {{ request.ip }}</p> 
+    </footer>
+</body>
+</html>

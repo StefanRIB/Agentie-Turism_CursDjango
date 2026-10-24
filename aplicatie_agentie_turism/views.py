@@ -91,11 +91,7 @@ def index(request):
         parametri=request.GET.dict()
     )
     print(accesare_curenta)
-    return HttpResponse("Agenția dispune de un catalog variat de " \
-    "oferte turistice către destinații din întreaga lume. Clienții " \
-    "au posibilitatea să achiziționeze bilete pentru un sejur complet "
-    "(transport, cazare etc) sau servicii individuale ale agenției (de " \
-    "exemplu, accesul ghidat în cadrul unui obiectiv turistic).")
+    return render(request, 'index.html')
 
 def info(request):
     
@@ -109,23 +105,9 @@ def info(request):
 
     valoare_parametru_data = request.GET.get("data", "")
     sectiune_html_generata = accesare_curenta.calculeaza_data(valoare_parametru_data)
-
-    html_baza = """
-    <!DOCTYPE html>
-    <html lang="ro">
-    <head>
-        <meta charset="UTF-8">
-        <title>Informații despre server</title>
-    </head>
-    <body>
-        <h1>Informații despre server</h1>
-    """
-    html_final = html_baza + sectiune_html_generata + "</body>\n</html>"
-    
-    return HttpResponse(html_final)
+    return render(request, 'info.html', {'sectiune_html': sectiune_html_generata})
 
 def log_accesari(request):
-
     accesare_curenta = Accesare(
         ip_client=get_ip(request),
         url=request.get_full_path(),
@@ -133,14 +115,14 @@ def log_accesari(request):
     )
 
     istoric = Accesare.istoric_accesari
-    html = "<!DOCTYPE html><html lang='ro'><head><meta charset='UTF-8'>" \
-            "<title>Log Accesări</title></head><body><h1>Log Accesări</h1>"
+
+    continut_html = "<h1>Log Accesări</h1>"
    
     parametri_primiti = request.GET.keys()
-    html += f"<section><h2>Parametri primiți ({len(parametri_primiti)})</h2><ul>"
+    continut_html += f"<section><h2>Parametri primiți ({len(parametri_primiti)})</h2><ul>"
     for p in parametri_primiti:
-        html += f"<li>{p}</li>"
-    html += "</ul></section>"
+        continut_html += f"<li>{p}</li>"
+    continut_html += "</ul></section>"
 
     lista_iduri_brut = request.GET.getlist('iduri')
     if lista_iduri_brut:
@@ -171,50 +153,50 @@ def log_accesari(request):
         if ultimele.isdigit():
             n = int(ultimele)
             if n > len(istoric):
-                html += f"<p style='color:red;'>Exista doar {len(istoric)} accesari fata de {n} accesari cerute.</p>"
+                continut_html += f"<p style='color:red;'>Exista doar {len(istoric)} accesari fata de {n} accesari cerute.</p>"
             else:
                 istoric = istoric[-n:]
         else:
-            html += "<p style='color:red;'>Eroare: Parametrul 'ultimele' trebuie să fie un număr întreg.</p>"
+            continut_html += "<p style='color:red;'>Eroare: Parametrul 'ultimele' trebuie să fie un număr întreg.</p>"
 
     accesari_param = request.GET.get('accesari')
     if accesari_param == 'nr':
-        html += f"<section><h2>Total accesări de la pornirea serverului: {len(Accesare.istoric_accesari)}</h2></section>"
+        continut_html += f"<section><h2>Total accesări de la pornirea serverului: {len(Accesare.istoric_accesari)}</h2></section>"
     elif accesari_param == 'detalii':
-        html += "<section><h2>Detalii Accesări (Data și Ora)</h2><ul>"
+        continut_html += "<section><h2>Detalii Accesări (Data și Ora)</h2><ul>"
         for acc in istoric:
-            html += f"<li>Momentul accesarii cu ID-ul {acc.id}: {acc.data.strftime('%d/%m/%Y %H:%M:%S')}</li>"
-        html += "</ul></section>"
+            continut_html += f"<li>Momentul accesarii cu ID-ul {acc.id}: {acc.data.strftime('%d/%m/%Y %H:%M:%S')}</li>"
+        continut_html += "</ul></section>"
 
     tabel_param = request.GET.get('tabel')
     if tabel_param:
-        html += "<section><h2>Tabel Accesări</h2><table border='1'><tr>"
+        continut_html += "<section><h2>Tabel Accesări</h2><table border='1'><tr>"
         coloane = ['id', 'ip_client', 'url', 'data'] if tabel_param == 'tot' else tabel_param.split(',')
         
         for col in coloane:
-            html += f"<th>{col}</th>"
-        html += "</tr>"
+            continut_html += f"<th>{col}</th>"
+        continut_html += "</tr>"
         
         for acc in istoric:
-            html += "<tr>"
+            continut_html += "<tr>"
             for col in coloane:
                 if col == 'id': 
-                    html += f"<td>{acc.id}</td>"
+                    continut_html += f"<td>{acc.id}</td>"
                 elif col == 'ip_client': 
-                    html += f"<td>{acc.ip_client}</td>"
+                    continut_html += f"<td>{acc.ip_client}</td>"
                 elif col == 'url': 
-                    html += f"<td>{acc.string_url()}</td>"
+                    continut_html += f"<td>{acc.string_url()}</td>"
                 elif col == 'data': 
-                    html += f"<td>{acc.data.strftime('%d/%m/%Y %H:%M')}</td>"
+                    continut_html += f"<td>{acc.data.strftime('%d/%m/%Y %H:%M')}</td>"
                 else: 
-                    html += "<td>N/A</td>"
-            html += "</tr>"
-        html += "</table></section>"
+                    continut_html += "<td>N/A</td>"
+            continut_html += "</tr>"
+        continut_html += "</table></section>"
     else:
-        html += "<section><h2>Lista Accesări</h2><ul>"
+        continut_html += "<section><h2>Lista Accesări</h2><ul>"
         for acc in istoric:
-            html += f"<li>ID: {acc.id}, Pagina: {acc.pagina()}, IP: {acc.ip_client}</li>"
-        html += "</ul></section>"
+            continut_html += f"<li>ID: {acc.id}, Pagina: {acc.pagina()}, IP: {acc.ip_client}</li>"
+        continut_html += "</ul></section>"
 
     frecvente = {}
     for acc in Accesare.istoric_accesari:
@@ -224,12 +206,11 @@ def log_accesari(request):
     if frecvente:
         pag_max = max(frecvente, key=frecvente.get)
         pag_min = min(frecvente, key=frecvente.get)
-        html += f"<section><h3>Statistici Pagină</h3>"
-        html += f"<p>Cea mai accesată pagină: <b>{pag_max}</b> ({frecvente[pag_max]} accesări)</p>"
-        html += f"<p>Cea mai puțin accesată pagină: <b>{pag_min}</b> ({frecvente[pag_min]} accesări)</p></section>"
+        continut_html += f"<section><h3>Statistici Pagină</h3>"
+        continut_html += f"<p>Cea mai accesată pagină: <b>{pag_max}</b> ({frecvente[pag_max]} accesări)</p>"
+        continut_html += f"<p>Cea mai puțin accesată pagină: <b>{pag_min}</b> ({frecvente[pag_min]} accesări)</p></section>"
 
-    html += "</body></html>"
-    return HttpResponse(html)
+    return render(request, 'log.html', {'continut_log': continut_html})
 
 def istoric_site(request):
     accesare_curenta = Accesare(
@@ -237,7 +218,7 @@ def istoric_site(request):
         url=request.get_full_path(),
         parametri=request.GET.dict()
     )
-    return HttpResponse("<h1>Istoric Agenție</h1><p>Aceasta este pagina de istoric.</p>")
+    return render(request, 'istoric.html')
 
 def despre(request):
     accesare_curenta = Accesare(
@@ -245,7 +226,7 @@ def despre(request):
         url=request.get_full_path(),
         parametri=request.GET.dict()
     )
-    return HttpResponse("<h1>Despre Noi</h1><p>Conținut despre echipă.</p>")
+    return render(request, 'despre.html')
 
 def detalii_accesare(request, id):
     accesare_curenta = Accesare(
@@ -261,3 +242,42 @@ def detalii_accesare(request, id):
             return HttpResponse(html)
             
     return HttpResponse("<h1 style='color:red;'>Accesarea nu a fost găsită!</h1>")
+
+def in_lucru(request):
+    accesare_curenta = Accesare(
+        ip_client=get_ip(request),
+        url=request.get_full_path(),
+        parametri=request.GET.dict()
+    )
+    return render(request, 'in_lucru.html')
+
+from .models import ServiciuIndividual
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.shortcuts import render
+
+
+def servicii_turism(request):
+    nrPagina=request.GET.get("pagina", 1)
+    # veti trata situatia in care nu e dat un numar intreg
+    produse=ServiciuIndividual.objects.all()
+    paginator = Paginator(produse, 5)
+    mesajEroare=None
+    try:
+        obPagina = paginator.page(nrPagina)
+    except EmptyPage:
+        obPagina=None
+        mesajEroare = "Nu mai sunt produse"
+    except PageNotAnInteger:
+        obPagina=None
+        mesajEroare = "Numar de pagina invalid"
+    return render(request, 'servicii_turism.html',
+                    {
+                        'pagina': obPagina,
+                        'eroare': mesajEroare
+                    }
+    )
+
+
+
+
+

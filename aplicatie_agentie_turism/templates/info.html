@@ -1,0 +1,9 @@
+{% extends 'baza.html' %}
+
+{% block title %}Informații Server{% endblock %}
+
+{% block content %}
+    <h1>Informații despre server</h1>
+    <!-- Filtrul safe permite randarea tag-urilor HTML generate în views.py -->
+    {{ sectiune_html|safe }}
+{% endblock %}

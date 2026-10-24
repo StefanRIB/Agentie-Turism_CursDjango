@@ -1,0 +1,36 @@
+{% extends 'baza.html' %}
+{% load static %}
+
+{% block title %}Acasă - Zbor & Dor{% endblock %}
+
+{% block content %}
+    <section id="introducere">
+        <h1>Bun venit</h1>
+        <p>
+           Agenția dispune de un catalog variat de oferte turistice către destinații din întreaga lume. 
+           Clienții au posibilitatea să achiziționeze bilete pentru un sejur complet (transport, cazare etc) 
+           sau servicii individuale ale agenției (de exemplu, accesul ghidat în cadrul unui obiectiv turistic).
+        </p>
+        <img src="{% static 'imagini/poza_index.jpeg' %}" alt="Imagine principală Zbor & Dor" width="600" style="border-radius: 8px; margin-top: 15px;">
+    </section>
+
+    <section id="oferte-curente">
+        <h2>Oferte Curente</h2>
+        <p>Pachetele și serviciile noastre de top.</p>
+    </section>
+
+    <section id="orar">
+        <h2>Orar de lucru</h2>
+        <p>Luni - Vineri: 09:00 - 18:00</p>
+    </section>
+
+    <section id="destinatii">
+        <h2>Cele mai căutate destinații</h2>
+        <p>Milano, Bergamo, Roma, Bruxelles.</p>
+    </section>
+
+    <section id="recenzii">
+        <h2>Recenzii Clienți</h2>
+        <p>Ce spun clienții noștri despre serviciile oferite.</p>
+    </section>
+{% endblock %}
