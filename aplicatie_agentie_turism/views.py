@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 import datetime
+from django.contrib import messages
 
 def get_ip(request):
     req_headers = request.META
@@ -91,6 +92,8 @@ def index(request):
         parametri=request.GET.dict()
     )
     print(accesare_curenta)
+    messages.info(request, "Bine ai venit pe Zbor & Dor! Explorează cele mai noi oferte de vacanță.")
+    messages.debug(request, f"[Sistem] Sesiune inițializată pentru IP-ul: {accesare_curenta.ip_client}")
     return render(request, 'index.html')
 
 def info(request):
@@ -154,6 +157,7 @@ def log_accesari(request):
             n = int(ultimele)
             if n > len(istoric):
                 continut_html += f"<p style='color:red;'>Exista doar {len(istoric)} accesari fata de {n} accesari cerute.</p>"
+                messages.warning(request, f"Ai solicitat {n} accesări, dar există doar {len(istoric)} în sistem. Le-am afișat pe toate.")
             else:
                 istoric = istoric[-n:]
         else:
@@ -210,6 +214,8 @@ def log_accesari(request):
         continut_html += f"<p>Cea mai accesată pagină: <b>{pag_max}</b> ({frecvente[pag_max]} accesări)</p>"
         continut_html += f"<p>Cea mai puțin accesată pagină: <b>{pag_min}</b> ({frecvente[pag_min]} accesări)</p></section>"
 
+    messages.debug(request, f"[Sistem] Am generat log-ul pentru {len(istoric)} înregistrări.")
+
     return render(request, 'log.html', {'continut_log': continut_html})
 
 def istoric_site(request):
@@ -226,6 +232,7 @@ def despre(request):
         url=request.get_full_path(),
         parametri=request.GET.dict()
     )
+    messages.info(request, "Suntem o echipă de pasionați gata să îți planifice următoarea aventură.")
     return render(request, 'despre.html')
 
 def detalii_accesare(request, id):
@@ -239,9 +246,11 @@ def detalii_accesare(request, id):
             html = f"<h1>Detalii Accesare ID: {acc.id}</h1>"
             html += f"<p>IP Client: {acc.ip_client}</p><p>URL: {acc.string_url()}</p>"
             html += f"<p>{acc.calculeaza_data()}</p><p>Parametri: {acc.lista_parametri()}</p>"
-            return HttpResponse(html)
+            messages.success(request, f"Detaliile pentru accesarea cu ID-ul {id} au fost încărcate corect din memorie.")
+            return render(request, 'detalii_accesare.html', {'continut_detalii': html})
             
-    return HttpResponse("<h1 style='color:red;'>Accesarea nu a fost găsită!</h1>")
+    messages.error(request, f"Eroare critică: Accesarea cu ID-ul {id} nu există în baza noastră de date temporară!")
+    return render(request, 'index.html')
 
 def in_lucru(request):
     accesare_curenta = Accesare(
@@ -249,6 +258,7 @@ def in_lucru(request):
         url=request.get_full_path(),
         parametri=request.GET.dict()
     )
+    messages.warning(request, "Atenție! Această pagină este încă în construcție! Reveniți mai târziu pentru a descoperi conținutul complet.")
     return render(request, 'in_lucru.html')
 
 from .models import ServiciuIndividual
@@ -258,24 +268,21 @@ from django.shortcuts import render
 
 def servicii_turism(request):
     nrPagina=request.GET.get("pagina", 1)
-    # veti trata situatia in care nu e dat un numar intreg
     produse=ServiciuIndividual.objects.all()
     paginator = Paginator(produse, 5)
-    mesajEroare=None
     try:
         obPagina = paginator.page(nrPagina)
+        messages.success(request, f"Catalogul de servicii a fost actualizat. Vizualizezi pagina {nrPagina}.")
     except EmptyPage:
         obPagina=None
-        mesajEroare = "Nu mai sunt produse"
+        messages.error(request, "Nu mai există produse pe această pagină. Ai depășit limita catalogului.")
     except PageNotAnInteger:
         obPagina=None
-        mesajEroare = "Numar de pagina invalid"
-    return render(request, 'servicii_turism.html',
-                    {
-                        'pagina': obPagina,
-                        'eroare': mesajEroare
-                    }
-    )
+        messages.error(request, "Numărul de pagină introdus în URL este invalid. Te rugăm să folosești butoanele de navigare.")
+    return render(request, 'servicii_turism.html', {'pagina': obPagina})
+
+
+
 
 
 

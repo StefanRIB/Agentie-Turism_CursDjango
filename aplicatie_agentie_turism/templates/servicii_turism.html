@@ -7,11 +7,11 @@
     <section class="sectiune-produse">
         <h1 class="titlu-pagina">Catalog Servicii Turistice</h1>
 
-        {% if eroare %}
+        {% comment %} {% if eroare %}
             <div class="mesaj-eroare">
                 <strong>Atenție:</strong> {{ eroare }}
             </div>
-        {% endif %}
+        {% endif %} {% endcomment %}
 
         <p class="text-paginare">
             Pagina {{ pagina.number }} din {{ pagina.paginator.num_pages }}
