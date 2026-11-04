@@ -1,0 +1,118 @@
+{% extends 'aplicatie_agentie_turism/baza.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .titlu-pagina {
+        text-align: center;
+        margin: 25px 0;
+        color: #2d3436;
+    }
+    .grid-produse {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 24px;
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .chenar-produs {
+        background-color: #ffffff;
+        border: 2px solid #dfe6e9;
+        border-radius: 12px;
+        padding: 18px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .chenar-produs:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+        border-color: #6c5ce7;
+    }
+    .badge-categorie {
+        display: inline-block;
+        background-color: #6c5ce7;
+        color: #ffffff;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 12px;
+        align-self: flex-start;
+    }
+    .imagine-produs {
+        width: 100%;
+        height: 190px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 14px;
+        border: 1px solid #eee;
+    }
+    .nume-produs {
+        font-size: 1.2rem;
+        color: #2d3436;
+        margin: 0 0 10px 0;
+    }
+    .specificatii-produs {
+        font-size: 0.95rem;
+        color: #636e72;
+        margin: 6px 0;
+    }
+    .pret-produs {
+        font-size: 1.25rem;
+        font-weight: bold;
+        color: #00b894;
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid #f1f2f6;
+    }
+</style>
+
+<h1 class="titlu-pagina">Toate Serviciile și Pachetele Turistice</h1>
+
+<div class="grid-produse">
+    {% for produs in produse %}
+        <div class="chenar-produs">
+            <div>
+                <!-- Categoria produsului -->
+                <span class="badge-categorie">
+                    {{ produs.id_categorie.nume }}
+                </span>
+
+                <!-- Imaginea produsului -->
+                {% if produs.imagine %}
+                    <img src="{{ produs.imagine.url }}" alt="{{ produs.nume_serviciu }}" class="imagine-produs">
+                {% else %}
+                    <img src="data:image/svg+xml;utf8,
+                    <svg xmlns='http://www.w3.org/2000/svg' width='400' height='250' viewBox='0 0 400 250'>
+                    <rect width='100%25' height='100%25' fill='%23dfe6e9'/>
+                    <text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23636e72' 
+                    font-family='Arial, sans-serif' font-size='20' font-weight='bold'>Imagine indisponibilă</text></svg>" 
+                         alt="Imagine indisponibilă" 
+                         class="imagine-produs">
+                {% endif %}
+
+                <!-- Numele produsului -->
+                <h3 class="nume-produs">{{ produs.nume_serviciu }}</h3>
+
+                <!-- Specificatiile produsului -->
+                <p class="specificatii-produs">
+                    <strong>Facilități:</strong> {{ produs.facilitati_incluse }}
+                </p>
+                <p class="specificatii-produs">
+                    <strong>Rating:</strong> ⭐ {{ produs.rating }} / 5.0
+                </p>
+            </div>
+
+            <div class="pret-produs">
+                Preț: {{ produs.pret_serviciu }} EUR
+            </div>
+        </div>
+    {% empty %}
+        <p style="text-align: center; grid-column: 1 / -1;">Momentan nu există produse înregistrate.</p>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -94,7 +94,7 @@ def index(request):
     print(accesare_curenta)
     messages.info(request, "Bine ai venit pe Zbor & Dor! Explorează cele mai noi oferte de vacanță.")
     messages.debug(request, f"[Sistem] Sesiune inițializată pentru IP-ul: {accesare_curenta.ip_client}")
-    return render(request, 'index.html')
+    return render(request, 'aplicatie_agentie_turism/index.html')
 
 def info(request):
     
@@ -108,7 +108,7 @@ def info(request):
 
     valoare_parametru_data = request.GET.get("data", "")
     sectiune_html_generata = accesare_curenta.calculeaza_data(valoare_parametru_data)
-    return render(request, 'info.html', {'sectiune_html': sectiune_html_generata})
+    return render(request, 'aplicatie_agentie_turism/info.html', {'sectiune_html': sectiune_html_generata})
 
 def log_accesari(request):
     accesare_curenta = Accesare(
@@ -216,7 +216,7 @@ def log_accesari(request):
 
     messages.debug(request, f"[Sistem] Am generat log-ul pentru {len(istoric)} înregistrări.")
 
-    return render(request, 'log.html', {'continut_log': continut_html})
+    return render(request, 'aplicatie_agentie_turism/log.html', {'continut_log': continut_html})
 
 def istoric_site(request):
     accesare_curenta = Accesare(
@@ -224,7 +224,7 @@ def istoric_site(request):
         url=request.get_full_path(),
         parametri=request.GET.dict()
     )
-    return render(request, 'istoric.html')
+    return render(request, 'aplicatie_agentie_turism/istoric.html')
 
 def despre(request):
     accesare_curenta = Accesare(
@@ -233,7 +233,7 @@ def despre(request):
         parametri=request.GET.dict()
     )
     messages.info(request, "Suntem o echipă de pasionați gata să îți planifice următoarea aventură.")
-    return render(request, 'despre.html')
+    return render(request, 'aplicatie_agentie_turism/despre.html')
 
 def detalii_accesare(request, id):
     accesare_curenta = Accesare(
@@ -247,10 +247,10 @@ def detalii_accesare(request, id):
             html += f"<p>IP Client: {acc.ip_client}</p><p>URL: {acc.string_url()}</p>"
             html += f"<p>{acc.calculeaza_data()}</p><p>Parametri: {acc.lista_parametri()}</p>"
             messages.success(request, f"Detaliile pentru accesarea cu ID-ul {id} au fost încărcate corect din memorie.")
-            return render(request, 'detalii_accesare.html', {'continut_detalii': html})
+            return render(request, 'aplicatie_agentie_turism/detalii_accesare.html', {'continut_detalii': html})
             
     messages.error(request, f"Eroare critică: Accesarea cu ID-ul {id} nu există în baza noastră de date temporară!")
-    return render(request, 'index.html')
+    return render(request, 'aplicatie_agentie_turism/index.html')
 
 def in_lucru(request):
     accesare_curenta = Accesare(
@@ -259,7 +259,7 @@ def in_lucru(request):
         parametri=request.GET.dict()
     )
     messages.warning(request, "Atenție! Această pagină este încă în construcție! Reveniți mai târziu pentru a descoperi conținutul complet.")
-    return render(request, 'in_lucru.html')
+    return render(request, 'aplicatie_agentie_turism/in_lucru.html')
 
 from .models import ServiciuIndividual
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -279,10 +279,14 @@ def servicii_turism(request):
     except PageNotAnInteger:
         obPagina=None
         messages.error(request, "Numărul de pagină introdus în URL este invalid. Te rugăm să folosești butoanele de navigare.")
-    return render(request, 'servicii_turism.html', {'pagina': obPagina})
+    return render(request, 'aplicatie_agentie_turism/servicii_turism.html', {'pagina': obPagina})
 
-
-
+def lista_produse(request):
+    produse = ServiciuIndividual.objects.select_related('id_categorie').all()
+    
+    return render(request, 'aplicatie_agentie_turism/lista_produse.html', {
+        'produse': produse
+    })
 
 
 
