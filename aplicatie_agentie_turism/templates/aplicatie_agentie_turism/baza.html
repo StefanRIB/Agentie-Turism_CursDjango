@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Agenție Turism{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/nav.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <header>
@@ -19,7 +20,15 @@
                 </li>
                 <li><a href="{% url 'despre' %}">Despre Noi</a></li>
                 <li><a href="{% url 'istoric_site' %}">Istoric</a></li>
-                <li><a href="{% url 'servicii_turism' %}">Produse</a></li>
+                <li><a href="{% url 'lista_produse' %}">Produse</a>
+                    {% if categorii_meniu %}
+                    <ul class="submeniu">
+                        {% for categorie in categorii_meniu %}
+                            <li><a href="{% url 'produse_categorie' categorie.nume %}">{{ categorie.nume }}</a></li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </li>
                 <li><a href="{% url 'contact' %}">Contact</a></li>
                 <li><a href="{% url 'cos_virtual' %}">Coș Virtual</a></li>
             </ul>

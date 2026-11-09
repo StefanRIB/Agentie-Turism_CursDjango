@@ -1,5 +1,7 @@
 from django.db import models
 from django.db.models import Q
+from django.urls import reverse
+from django.contrib.postgres.fields import ArrayField
 
 # Create your models here.
 
@@ -43,7 +45,7 @@ class CategorieServiciu(models.Model):
 
     descriere = models.TextField(null=True, blank=True)
     culoare = models.CharField(max_length=20, help_text="Codul hexazecimal al culorii pentru frontend (ex: #FFFFFF).")
-    sigla = models.ImageField(upload_to='categorii_sigle/', null=True, blank=True)
+    sigla = models.CharField(max_length=50, null=True, blank=True, help_text="Ex: fa-solid fa-plane")
     
     tip_public = models.CharField(
         max_length=20, 
@@ -86,6 +88,7 @@ class Furnizor(models.Model):
     
 # 3. Tabelul SERVICIU_INDIVIDUAL
 class ServiciuIndividual(models.Model):
+    imagine = models.ImageField(upload_to='servicii/', blank=True, null=True)
     nume_serviciu = models.CharField(max_length=200)
     
     pret_serviciu = models.DecimalField(
@@ -105,6 +108,13 @@ class ServiciuIndividual(models.Model):
     id_categorie = models.ForeignKey(CategorieServiciu, on_delete=models.CASCADE, related_name='servicii')
     id_furnizor = models.ForeignKey(Furnizor, on_delete=models.CASCADE, related_name='servicii_prestate')
 
+    stoc_locuri = models.IntegerField(default=10)
+    taguri = ArrayField(
+        models.CharField(max_length=50),
+        blank=True,
+        default=list
+    )
+
     class Meta:
         verbose_name_plural = "Servicii Individuale"
         constraints = [
@@ -119,6 +129,9 @@ class ServiciuIndividual(models.Model):
 
     def __str__(self):
         return f"{self.nume_serviciu} - {self.pret_serviciu} EUR"
+    
+    def get_absolute_url(self):
+        return reverse('detalii_produs', kwargs={'pk': self.pk})
 
 
 # 4. Tabelul PACHET_SEJUR  

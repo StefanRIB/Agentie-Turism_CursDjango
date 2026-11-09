@@ -1,7 +1,8 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 import datetime
 from django.contrib import messages
+from django.conf import settings
 
 def get_ip(request):
     req_headers = request.META
@@ -261,7 +262,7 @@ def in_lucru(request):
     messages.warning(request, "Atenție! Această pagină este încă în construcție! Reveniți mai târziu pentru a descoperi conținutul complet.")
     return render(request, 'aplicatie_agentie_turism/in_lucru.html')
 
-from .models import ServiciuIndividual
+from .models import ServiciuIndividual, CategorieServiciu
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import render
 
@@ -281,12 +282,87 @@ def servicii_turism(request):
         messages.error(request, "Numărul de pagină introdus în URL este invalid. Te rugăm să folosești butoanele de navigare.")
     return render(request, 'aplicatie_agentie_turism/servicii_turism.html', {'pagina': obPagina})
 
-def lista_produse(request):
-    produse = ServiciuIndividual.objects.select_related('id_categorie').all()
+def lista_produse(request, nume_categorie=None):
     
-    return render(request, 'aplicatie_agentie_turism/lista_produse.html', {
-        'produse': produse
-    })
+    # Verific daca ma aflu pe o pagina aferenta unei categorii
+    if nume_categorie:
+        categorie_curenta = get_object_or_404(CategorieServiciu, nume=nume_categorie)
+        produse = ServiciuIndividual.objects.select_related('id_categorie').filter(id_categorie=categorie_curenta)
+    else:
+        categorie_curenta = None
+        produse = ServiciuIndividual.objects.select_related('id_categorie').all()
+
+    # Cod pentru sortare si filtrare dupa taguri
+    col_param = request.GET.get('col', 'nume') 
+    sort_param = request.GET.get('sort', 'a')  
+    coloane_permise = {'nume': 'nume_serviciu', 'pret': 'pret_serviciu', 'rating': 'rating'}
+    camp_sortare = coloane_permise.get(col_param, 'nume_serviciu')
+    if sort_param == 'd':
+        camp_sortare = f"-{camp_sortare}"
+
+    taguri_active = list(dict.fromkeys(request.GET.getlist('tag')))
+    if taguri_active:
+        produse = produse.filter(taguri__contains=taguri_active)
+
+    produse = produse.order_by(camp_sortare)
+
+    taguri_active_info = []
+    for tag in taguri_active:
+        params_fara_tag = request.GET.copy()
+        taguri_ramase = [t for t in taguri_active if t != tag]
+        params_fara_tag.setlist('tag', taguri_ramase)
+        url_eliminare = f"?{params_fara_tag.urlencode()}" if params_fara_tag else request.path
+        taguri_active_info.append({'nume': tag, 'url_eliminare': url_eliminare})
+
+    query_curent = request.GET.urlencode()
+
+    # Cod pentru paginare
+    paginator = Paginator(produse, settings.PROD_PER_PAG)
+    numar_pagina = request.GET.get('page')
+    page_obj = paginator.get_page(numar_pagina)
+
+    params = request.GET.copy()
+    if 'page' in params:
+        del params['page']
+    query_fara_page = params.urlencode()
+
+    context = {
+        'page_obj': page_obj,
+        'col_curent': col_param,
+        'sort_curent': sort_param,
+        'stoc_min': settings.STOC_MIN,
+        'taguri_active': taguri_active,
+        'taguri_active_info': taguri_active_info,
+        'query_curent': query_curent,
+        'query_fara_page': query_fara_page,
+        'categorie_curenta': categorie_curenta, 
+    }
+    
+    return render(request, 'aplicatie_agentie_turism/lista_produse.html', context)
+
+def detalii_produs(request, pk):
+    # Tratez cazul în care se accesează un produs inexistent
+    try:
+        produs = ServiciuIndividual.objects.select_related('id_categorie', 'id_furnizor').get(pk=pk)
+    except ServiciuIndividual.DoesNotExist:
+        # Se returneaza o pagina de eroare cu status 404
+        return render(request, 'aplicatie_agentie_turism/eroare_produs.html', {'id_cautat': pk}, status=404)
+
+    # Selectez aleator 3 produse din aceeasi categorie 
+    K = 3
+    produse_similare = (
+        ServiciuIndividual.objects
+        .filter(id_categorie=produs.id_categorie)
+        .exclude(pk=produs.pk)
+        .order_by('?')[:K]
+    )
+
+    context = {
+        'produs': produs,
+        'produse_similare': produse_similare,
+        'stoc_min': settings.STOC_MIN,
+    }
+    return render(request, 'aplicatie_agentie_turism/detalii_produs.html', context)
 
 
 

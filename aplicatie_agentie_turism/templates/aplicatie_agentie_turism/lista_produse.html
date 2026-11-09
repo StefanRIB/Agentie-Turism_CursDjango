@@ -71,18 +71,135 @@
     }
 </style>
 
-<h1 class="titlu-pagina">Toate Serviciile și Pachetele Turistice</h1>
+{% if categorie_curenta %}
+    <!-- Antet specific pentru pagina categoriei -->
+    <div style="max-width: 1200px; margin: 0 auto 20px auto; padding: 20px; background-color: #f8f9fa; border-left: 5px solid {{ categorie_curenta.culoare|default:'#6c5ce7' }}; border-radius: 8px;">
+        <h1 style="margin-top: 0; color: #2d3436; font-size: 2rem;">
+            <!-- Afisarea icon-ului -->
+            {% if categorie_curenta.sigla %}
+                <i class="{{ categorie_curenta.sigla }}" style="color: {{ categorie_curenta.culoare }}; margin-right: 10px;"></i>
+            {% endif %}
+            Categoria: {{ categorie_curenta.nume }}
+        </h1>
+        
+        {% if categorie_curenta.descriere %}
+            <p style="font-size: 1.1em; color: #636e72; line-height: 1.6;">{{ categorie_curenta.descriere }}</p>
+        {% endif %}
+        
+        <a href="{% url 'lista_produse' %}" style="text-decoration: none; color: #00b894; font-weight: bold; display: inline-block; margin-top: 10px;">
+            &larr; Vezi toate pachetele turistice
+        </a>
+    </div>
+{% else %}
+    <!-- Antet general pentru situatiile cand nicio categorie nu este selectata -->
+    <h1 style="text-align: center; color: #2d3436; margin-bottom: 25px;">Toate Serviciile și Pachetele Turistice</h1>
+{% endif %}
+
+
+<!-- Formular pentru selectarea coloanei si a directiei de sortare -->
+<div style="max-width: 1200px; margin: 0 auto 25px auto; padding: 15px; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+    <form method="get" style="display: flex; gap: 15px; align-items: center; justify-content: center;">
+        
+        <label for="col" style="font-weight: bold; color: #2d3436;">Sortează după:</label>
+        <select name="col" id="col" style="padding: 6px; border-radius: 4px; border: 1px solid #ccc;">
+            <option value="nume" {% if col_curent == 'nume' %}selected{% endif %}>Nume serviciu</option>
+            <option value="pret" {% if col_curent == 'pret' %}selected{% endif %}>Preț</option>
+            <option value="rating" {% if col_curent == 'rating' %}selected{% endif %}>Rating</option>
+        </select>
+
+        <label for="sort" style="font-weight: bold; color: #2d3436;">Direcție:</label>
+        <select name="sort" id="sort" style="padding: 6px; border-radius: 4px; border: 1px solid #ccc;">
+            <option value="a" {% if sort_curent == 'a' %}selected{% endif %}>Ascendent (a)</option>
+            <option value="d" {% if sort_curent == 'd' %}selected{% endif %}>Descendent (d)</option>
+        </select>
+
+        <button type="submit" style="padding: 8px 16px; background-color: #6c5ce7; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">
+            Aplică Filtrele
+        </button>
+        
+    </form>
+</div>
+
+<!-- Zona pentru tagurile active cu buton "x" -->
+{% if taguri_active_info %}
+    <div style="max-width: 1200px; margin: 0 auto 20px auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <strong style="color: #2d3436; font-size: 1.1em;">Filtre active:</strong>
+        
+        {% for item in taguri_active_info %}
+            <!-- Buton cu numele tagului -->
+            <a href="{{ item.url_eliminare }}" style="background: #6c5ce7; color: white; padding: 6px 14px; border-radius: 20px; text-decoration: none; font-size: 0.9em; display: inline-flex; align-items: center; gap: 8px; font-weight: bold; box-shadow: 0 2px 4px rgba(108, 92, 231, 0.3);">
+                #{{ item.nume }} 
+                <span style="background: rgba(0,0,0,0.25); border-radius: 50%; padding: 1px 6px; font-size: 0.85em; transition: background 0.2s;">x</span>
+            </a>
+        {% endfor %}
+        
+        <!-- Buton pentru eliminarea tuturor filtrelor -->
+        <a href="{% url 'lista_produse' %}" style="color: #d63031; text-decoration: none; font-size: 0.9em; font-weight: bold; margin-left: 10px; text-decoration: underline;">
+            Șterge toate
+        </a>
+    </div>
+{% endif %}
+
+<!-- Sectiunea de paginare -->
+<div style="max-width: 1200px; margin: 20px auto; padding: 15px; background: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+    
+    <div style="font-weight: bold; color: #636e72;">
+        Se afișează produsele între {{ page_obj.start_index }} și {{ page_obj.end_index }} din totalul de {{ page_obj.paginator.count }} produse.
+    </div>
+
+    <div style="display: flex; gap: 15px; align-items: center;">
+        {% if page_obj.has_previous %}
+            <a href="?{% if query_fara_page %}{{ query_fara_page }}&{% endif %}page={{ page_obj.previous_page_number }}" 
+               style="padding: 6px 12px; background: #6c5ce7; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
+                &laquo; Anterioară
+            </a>
+        {% else %}
+            <span style="padding: 6px 12px; background: #dfe6e9; color: #b2bec3; border-radius: 4px; font-weight: bold; cursor: not-allowed;">
+                &laquo; Anterioară
+            </span>
+        {% endif %}
+
+        <span style="font-weight: bold;">
+            Pagina {{ page_obj.number }} din {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?{% if query_fara_page %}{{ query_fara_page }}&{% endif %}page={{ page_obj.next_page_number }}" 
+               style="padding: 6px 12px; background: #6c5ce7; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
+                Următoare &raquo;
+            </a>
+        {% else %}
+            <span style="padding: 6px 12px; background: #dfe6e9; color: #b2bec3; border-radius: 4px; font-weight: bold; cursor: not-allowed;">
+                Următoare &raquo;
+            </span>
+        {% endif %}
+    </div>
+</div>
 
 <div class="grid-produse">
-    {% for produs in produse %}
-        <div class="chenar-produs">
+    {% for produs in page_obj %}
+        
+        <!-- Folosesc culoarea categoriei pentru chenar, dar o modific cu rosu daca stocul este limitat -->
+        <div class="chenar-produs" 
+            {% if produs.stoc_locuri < stoc_min %}
+                style="border-color: #d63031; box-shadow: 0 4px 10px rgba(214, 48, 49, 0.2);"
+            {% else %}
+                style="border-color: {{ produs.id_categorie.culoare|default:'#dfe6e9' }};"
+            {% endif %}>
+            
             <div>
-                <!-- Categoria produsului -->
-                <span class="badge-categorie">
+                <a href="{% url 'produse_categorie' produs.id_categorie.nume %}" 
+                   class="badge-categorie" 
+                   style="background-color: {{ produs.id_categorie.culoare|default:'#6c5ce7' }}; text-decoration: none;">
+                    
+                    {% if produs.id_categorie.sigla %}
+                        <i class="{{ produs.id_categorie.sigla }}" style="margin-right: 4px;"></i>
+                    {% endif %}
+                    
                     {{ produs.id_categorie.nume }}
-                </span>
+                </a>
 
-                <!-- Imaginea produsului -->
+                <!-- Afisarea imaginii -->
                 {% if produs.imagine %}
                     <img src="{{ produs.imagine.url }}" alt="{{ produs.nume_serviciu }}" class="imagine-produs">
                 {% else %}
@@ -91,24 +208,57 @@
                     <rect width='100%25' height='100%25' fill='%23dfe6e9'/>
                     <text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23636e72' 
                     font-family='Arial, sans-serif' font-size='20' font-weight='bold'>Imagine indisponibilă</text></svg>" 
-                         alt="Imagine indisponibilă" 
-                         class="imagine-produs">
+                        alt="Imagine indisponibilă" 
+                        class="imagine-produs">
                 {% endif %}
 
-                <!-- Numele produsului -->
-                <h3 class="nume-produs">{{ produs.nume_serviciu }}</h3>
+                <h3 class="nume-produs">
+                    <a href="{{ produs.get_absolute_url }}" style="text-decoration: none; color: #2d3436;">
+                        {{ produs.nume_serviciu }}
+                    </a>
+                </h3>
 
-                <!-- Specificatiile produsului -->
-                <p class="specificatii-produs">
-                    <strong>Facilități:</strong> {{ produs.facilitati_incluse }}
-                </p>
-                <p class="specificatii-produs">
-                    <strong>Rating:</strong> ⭐ {{ produs.rating }} / 5.0
-                </p>
+                <!-- Marcaj vizual pentru STOC LIMITAT -->
+                {% if produs.stoc_locuri < stoc_min %}
+                    <p style="color: #d63031; font-weight: bold; font-size: 0.9em; margin: 5px 0;">
+                        ⚠️ Stoc limitat (doar {{ produs.stoc_locuri }} locuri rămase)!
+                    </p>
+                {% endif %}
+
+                <p class="specificatii-produs"><strong>Facilități:</strong> {{ produs.facilitati_incluse }}</p>
+                <p class="specificatii-produs"><strong>Rating:</strong> ⭐ {{ produs.rating }} / 5.0</p>
             </div>
 
-            <div class="pret-produs">
-                Preț: {{ produs.pret_serviciu }} EUR
+            <div>
+                <!-- Lista de Taguri -->
+                <div style="margin: 10px 0; display: flex; flex-wrap: wrap; gap: 6px;">
+                    {% for tag in produs.taguri %}
+                        
+                        {% if tag in taguri_active %}
+                            {% for info in taguri_active_info %}
+                                {% if info.nume == tag %}
+                                    <a href="{{ info.url_eliminare }}" 
+                                       style="text-decoration: none; padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; color: #fff; background-color: #d63031;" 
+                                       title="Elimină acest filtru">
+                                        #{{ tag }} ✖
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                            
+                        {% else %}
+                            <a href="?{% if query_curent %}{{ query_curent }}&{% endif %}tag={{ tag }}" 
+                               style="text-decoration: none; padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; color: #2d3436; background-color: #dfe6e9;" 
+                               title="Adaugă la filtre">
+                                #{{ tag }}
+                            </a>
+                        {% endif %}
+                        
+                    {% endfor %}
+                </div>
+
+                <div class="pret-produs">
+                    Preț: {{ produs.pret_serviciu }} EUR
+                </div>
             </div>
         </div>
     {% empty %}

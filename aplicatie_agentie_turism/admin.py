@@ -57,6 +57,16 @@ class ServiciuIndividualAdmin(admin.ModelAdmin):
 
     actions = [activeaza_servicii, dezactiveaza_servicii]
 
+    fieldsets = (
+        ('Informații Principale', {
+            'fields': ('nume_serviciu', 'pret_serviciu', 'id_categorie', 'id_furnizor', 'este_activ')
+        }),
+        ('Detalii Opționale', {
+            'classes': ('collapse',), 
+            'fields': ('facilitati_incluse', 'rating', 'imagine', 'taguri', 'stoc_locuri') 
+        }),
+    )
+
     @admin.display(description='Contact Furnizor (One-to-Many)')
     def get_furnizor_contact(self, obj):
         if obj.id_furnizor and obj.id_furnizor.email_contact:

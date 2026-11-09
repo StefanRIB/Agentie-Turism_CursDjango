@@ -12,4 +12,6 @@ urlpatterns = [
     path("contact/", views.in_lucru, name="contact"),
     path("cos_virtual/", views.in_lucru, name="cos_virtual"),
     path('produse/', views.lista_produse, name='lista_produse'),
+    path('produs/<int:pk>/', views.detalii_produs, name='detalii_produs'),
+    path('categorii/<str:nume_categorie>/', views.lista_produse, name='produse_categorie'),
 ]

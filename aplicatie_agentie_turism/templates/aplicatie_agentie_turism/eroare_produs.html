@@ -1,0 +1,11 @@
+{% extends 'aplicatie_agentie_turism/baza.html' %}
+
+{% block content %}
+<div style="text-align: center; margin-top: 50px;">
+    <h1 style="color: red;">Eroare: Produs Inexistent</h1>
+    <p>Ne pare rău, dar serviciul turistic cu ID-ul {{ id_cautat }} nu există în baza noastră de date.</p>
+    <a href="{% url 'lista_produse' %}" style="display: inline-block; padding: 10px 20px; background: #6c5ce7; color: white; text-decoration: none; border-radius: 5px;">
+        Vezi toate produsele
+    </a>
+</div>
+{% endblock %}
