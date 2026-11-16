@@ -3,6 +3,17 @@ from django.http import HttpResponse
 import datetime
 from django.contrib import messages
 from django.conf import settings
+from django.core.mail import send_mail
+
+def trimite_email():
+    send_mail(
+        subject='Salutare!',
+        message='Salut. Ce mai faci?',
+        html_message='<h1>Salut</h1><p>Ce mai faci?</p>',
+        from_email='cursdjango70@gmail.com',
+        recipient_list=['cursdjango70@gmail.com'],
+        fail_silently=False,
+    )
 
 def get_ip(request):
     req_headers = request.META
@@ -87,6 +98,7 @@ class Accesare:
         return rezultat
 
 def index(request):
+    trimite_email()
     accesare_curenta = Accesare(
         ip_client=get_ip(request),
         url=request.get_full_path(),
