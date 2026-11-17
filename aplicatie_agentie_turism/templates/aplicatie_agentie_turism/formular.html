@@ -1,0 +1,10 @@
+{% extends 'aplicatie_agentie_turism/base_utilizatori.html' %}
+{% block titlu %}{{ titlu }}{% endblock %}
+{% block continut %}
+  <h1>{{ titlu }}</h1>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">{{ buton }}</button>
+  </form>
+{% endblock %}

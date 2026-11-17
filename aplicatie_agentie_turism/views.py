@@ -4,6 +4,14 @@ import datetime
 from django.contrib import messages
 from django.conf import settings
 from django.core.mail import send_mail
+from django.shortcuts import redirect
+from django.contrib.auth import login, logout, update_session_auth_hash
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.views.decorators.http import require_POST
+from .forms import InregistrareForm, LoginForm, EditareDateForm
+from .models import Profil, Utilizator
 
 def trimite_email():
     send_mail(
@@ -377,6 +385,120 @@ def detalii_produs(request, pk):
     return render(request, 'aplicatie_agentie_turism/detalii_produs.html', context)
 
 
+O_ZI = 24 * 60 * 60  # secunde
 
 
+def _log_accesare(request):
+    """Inregistreaza accesarea in istoric, la fel ca celelalte pagini ale site-ului."""
+    return Accesare(
+        ip_client=get_ip(request),
+        url=request.get_full_path(),
+        parametri=request.GET.dict()
+    )
 
+
+def _salveaza_in_sesiune(request, utilizator):
+    """Memoreaza in sesiune datele utilizatorului si ale profilului (valori serializabile JSON)."""
+    profil = Profil.objects.filter(utilizator=utilizator).first()
+    request.session['date_utilizator'] = {
+        'username': utilizator.username,
+        'first_name': utilizator.first_name,
+        'last_name': utilizator.last_name,
+        'email': utilizator.email,
+        'telefon': utilizator.telefon,
+        'data_nasterii': utilizator.data_nasterii.strftime('%d.%m.%Y') if utilizator.data_nasterii else '',
+        'gen': utilizator.get_gen_display(),
+        'data_inregistrarii': utilizator.date_joined.strftime('%d.%m.%Y %H:%M'),
+    }
+    request.session['date_profil'] = (
+        {
+            'judet': profil.judet,
+            'strada': profil.strada,
+            'cod_postal': profil.cod_postal,
+            'tara': profil.tara,
+        }
+        if profil else None
+    )
+
+
+def inregistrare_view(request):
+    _log_accesare(request)
+    if request.user.is_authenticated:
+        return redirect('profil')
+    form = InregistrareForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        utilizator = form.save()
+        form.salveaza_profil(utilizator)  # Profil se creeaza doar daca s-a completat ceva
+        messages.success(request, "Cont creat cu succes. Vă puteți autentifica.")
+        return redirect('login')
+    return render(request, 'aplicatie_agentie_turism/formular.html', {
+        'titlu': 'Înregistrare', 'form': form, 'buton': 'Creează cont',
+    })
+
+
+def login_view(request):
+    _log_accesare(request)
+    if request.user.is_authenticated:
+        return redirect('profil')
+    form = LoginForm(request, data=request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        utilizator = form.get_user()
+        login(request, utilizator)
+        # bifat -> sesiune de o zi; nebifat -> expira la inchiderea browserului
+        request.session.set_expiry(O_ZI if form.cleaned_data['ramane_logat'] else 0)
+        _salveaza_in_sesiune(request, utilizator)
+        next_url = request.GET.get('next')
+        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+            return redirect(next_url)
+        return redirect('profil')
+    return render(request, 'aplicatie_agentie_turism/formular.html', {
+        'titlu': 'Autentificare', 'form': form, 'buton': 'Login',
+    })
+
+
+@require_POST
+def logout_view(request):
+    logout(request)
+    messages.info(request, "Ați fost deconectat.")
+    return redirect('login')
+
+
+@login_required
+def profil_view(request):
+    _log_accesare(request)
+    if 'date_utilizator' not in request.session:
+        _salveaza_in_sesiune(request, request.user)
+    return render(request, 'aplicatie_agentie_turism/profil.html', {
+        'date_utilizator': request.session['date_utilizator'],
+        'date_profil': request.session.get('date_profil'),
+    })
+
+
+@login_required
+def editare_date_view(request):
+    _log_accesare(request)
+    utilizator = Utilizator.objects.get(pk=request.user.pk)
+    form = EditareDateForm(request.POST or None, instance=utilizator)
+    if request.method == 'POST' and form.is_valid():
+        utilizator = form.save()
+        form.salveaza_profil(utilizator)  # creeaza sau actualizeaza Profil
+        _salveaza_in_sesiune(request, utilizator)
+        messages.success(request, "Datele au fost actualizate.")
+        return redirect('profil')
+    return render(request, 'aplicatie_agentie_turism/formular.html', {
+        'titlu': 'Modifică datele', 'form': form, 'buton': 'Salvează',
+    })
+
+
+@login_required
+def schimba_parola_view(request):
+    _log_accesare(request)
+    form = PasswordChangeForm(request.user, request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        utilizator = form.save()
+        update_session_auth_hash(request, utilizator)  # ramane logat dupa schimbare
+        messages.success(request, "Parola a fost schimbată.")
+        return redirect('profil')
+    return render(request, 'aplicatie_agentie_turism/formular.html', {
+        'titlu': 'Schimbă parola', 'form': form, 'buton': 'Schimbă parola',
+    })

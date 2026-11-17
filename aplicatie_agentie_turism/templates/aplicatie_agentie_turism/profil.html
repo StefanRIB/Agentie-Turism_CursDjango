@@ -1,0 +1,30 @@
+{% extends 'aplicatie_agentie_turism/base_utilizatori.html' %}
+{% block titlu %}Profilul meu{% endblock %}
+{% block continut %}
+  <h1>Profilul meu</h1>
+  <h2>Date utilizator</h2>
+  <table>
+    <tr><td>Username</td><td>{{ date_utilizator.username }}</td></tr>
+    <tr><td>Nume</td><td>{{ date_utilizator.last_name }} {{ date_utilizator.first_name }}</td></tr>
+    <tr><td>E-mail</td><td>{{ date_utilizator.email }}</td></tr>
+    <tr><td>Telefon</td><td>{{ date_utilizator.telefon }}</td></tr>
+    <tr><td>Data nașterii</td><td>{{ date_utilizator.data_nasterii }}</td></tr>
+    <tr><td>Gen</td><td>{{ date_utilizator.gen }}</td></tr>
+    <tr><td>Cont creat la</td><td>{{ date_utilizator.data_inregistrarii }}</td></tr>
+  </table>
+
+  <h2>Date profil</h2>
+  {% if date_profil %}
+    <table>
+      <tr><td>Județ</td><td>{{ date_profil.judet }}</td></tr>
+      <tr><td>Strada</td><td>{{ date_profil.strada }}</td></tr>
+      <tr><td>Cod poștal</td><td>{{ date_profil.cod_postal }}</td></tr>
+      <tr><td>Țara</td><td>{{ date_profil.tara }}</td></tr>
+    </table>
+  {% else %}
+    <p>Nu ați completat încă datele de profil.</p>
+  {% endif %}
+
+  <p><a href="{% url 'editare_date' %}">Modifică datele</a> |
+     <a href="{% url 'schimba_parola' %}">Schimbă parola</a></p>
+{% endblock %}

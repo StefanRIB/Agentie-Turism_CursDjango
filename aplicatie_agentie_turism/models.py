@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 from django.db.models import Q
 from django.urls import reverse
 from django.contrib.postgres.fields import ArrayField
@@ -171,3 +172,173 @@ class PunctIntalnire(models.Model):
 
     def __str__(self):
         return f"{self.adresa} (pentru: {self.id_serviciu.nume_serviciu})"
+
+# 6. Tabelul UTILIZATOR 
+class Utilizator(AbstractUser):
+    class Gen(models.TextChoices):
+        MASCULIN = 'M', 'Masculin'
+        FEMININ = 'F', 'Feminin'
+        ALTUL = 'A', 'Altul'
+
+    telefon = models.CharField(
+        max_length=20, blank=True,
+        help_text="Cu prefix internațional (ex: +40712345678)."
+    )
+    data_nasterii = models.DateField(null=True, blank=True)
+    gen = models.CharField(max_length=1, choices=Gen.choices, default=Gen.ALTUL)
+
+    class Meta:
+        verbose_name_plural = "Utilizatori"
+
+    def __str__(self):
+        return self.username
+
+
+# 7. Tabelul PROFIL (one-to-one cu UTILIZATOR, toate campurile optionale)
+class Profil(models.Model):
+    utilizator = models.OneToOneField(Utilizator, on_delete=models.CASCADE, related_name='profil')
+    judet = models.CharField(max_length=100, blank=True)
+    strada = models.CharField(max_length=150, blank=True)
+    cod_postal = models.CharField(max_length=10, blank=True)
+    tara = models.CharField(max_length=100, blank=True)
+
+    class Meta:
+        verbose_name_plural = "Profile"
+
+    def __str__(self):
+        return f"Profil {self.utilizator.username}"
+
+
+# 8. Tabelul DEPARTAMENT (sef = un angajat, poate fi NULL)
+class Departament(models.Model):
+    nume_departament = models.CharField(max_length=100, unique=True)
+    sef = models.OneToOneField(
+        'Angajat', null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='departament_condus'
+    )
+
+    class Meta:
+        verbose_name_plural = "Departamente"
+
+    def __str__(self):
+        return self.nume_departament
+
+
+# 9. Tabelul ANGAJAT (one-to-one cu UTILIZATOR, N-1 cu DEPARTAMENT)
+class Angajat(models.Model):
+    utilizator = models.OneToOneField(Utilizator, on_delete=models.CASCADE, related_name='angajat')
+    departament = models.ForeignKey(
+        Departament, null=True, blank=True, on_delete=models.SET_NULL, related_name='angajati'
+    )
+    data_angajare = models.DateField()
+    salariu = models.DecimalField(max_digits=10, decimal_places=2)
+    functie = models.CharField(max_length=100)
+
+    class Meta:
+        verbose_name_plural = "Angajați"
+        constraints = [
+            models.CheckConstraint(condition=Q(salariu__gte=0), name='salariu_pozitiv')
+        ]
+
+    def __str__(self):
+        return f"{self.utilizator.username} - {self.functie}"
+
+
+# 10. Tabelul VOUCHER (un utilizator detine mai multe vouchere)
+class Voucher(models.Model):
+    utilizator = models.ForeignKey(Utilizator, on_delete=models.CASCADE, related_name='vouchere')
+    cod_voucher = models.CharField(max_length=30, unique=True)
+    procent_reducere = models.FloatField(help_text="Între 0 și 100.")
+    valabilitate = models.DateField(help_text="Data până la care este valabil voucherul.")
+
+    class Meta:
+        verbose_name_plural = "Vouchere"
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(procent_reducere__gte=0) & Q(procent_reducere__lte=100),
+                name='procent_voucher_valid'
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.cod_voucher} (-{self.procent_reducere}%)"
+
+
+# 11. Tabelul REVIEW (un utilizator scrie review-uri pentru servicii)
+class Review(models.Model):
+    utilizator = models.ForeignKey(Utilizator, on_delete=models.CASCADE, related_name='review_uri')
+    serviciu = models.ForeignKey(ServiciuIndividual, on_delete=models.CASCADE, related_name='review_uri')
+    data_postare = models.DateTimeField(auto_now_add=True)
+    nota_review = models.PositiveSmallIntegerField(help_text="Notă între 1 și 5.")
+
+    class Meta:
+        verbose_name_plural = "Review-uri"
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(nota_review__gte=1) & Q(nota_review__lte=5),
+                name='nota_review_1_5'
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.utilizator.username} -> {self.serviciu.nume_serviciu}: {self.nota_review}/5"
+
+
+# 12. Tabelul INTREBARE (utilizatorul adreseaza intrebari despre un serviciu)
+class Intrebare(models.Model):
+    utilizator = models.ForeignKey(Utilizator, on_delete=models.CASCADE, related_name='intrebari')
+    serviciu = models.ForeignKey(ServiciuIndividual, on_delete=models.CASCADE, related_name='intrebari')
+    text_intrebare = models.TextField()
+    data_intrebare = models.DateTimeField(auto_now_add=True)
+    raspuns_oficial = models.TextField(null=True, blank=True)
+
+    class Meta:
+        verbose_name_plural = "Întrebări"
+
+    def __str__(self):
+        return f"{self.text_intrebare[:50]}"
+
+
+# 13. Tabelul COMANDA (M-N cu SERVICIU_INDIVIDUAL prin COMANDA_SERVICIU)
+class Comanda(models.Model):
+    class Status(models.TextChoices):
+        PLASATA = 'plasata', 'Plasată'
+        IN_PROCESARE = 'in_procesare', 'În procesare'
+        EFECTUATA = 'efectuata', 'Efectuată'
+        ANULATA = 'anulata', 'Anulată'
+
+    class MetodaPlata(models.TextChoices):
+        CARD = 'card', 'Card'
+        RAMBURS = 'ramburs', 'Ramburs'
+        TRANSFER = 'transfer', 'Transfer bancar'
+
+    utilizator = models.ForeignKey(Utilizator, on_delete=models.CASCADE, related_name='comenzi')
+    status_comanda = models.CharField(max_length=20, choices=Status.choices, default=Status.PLASATA)
+    data_inregistrarii = models.DateTimeField(auto_now_add=True)
+    metoda_plata = models.CharField(max_length=20, choices=MetodaPlata.choices, default=MetodaPlata.CARD)
+    servicii = models.ManyToManyField(
+        ServiciuIndividual, through='ComandaServiciu', related_name='comenzi'
+    )
+
+    class Meta:
+        verbose_name_plural = "Comenzi"
+
+    def __str__(self):
+        return f"Comanda #{self.pk} - {self.utilizator.username} ({self.get_status_comanda_display()})"
+
+
+# Tabela de legatura COMANDA - SERVICIU_INDIVIDUAL (cu atributul "cantitate")
+class ComandaServiciu(models.Model):
+    comanda = models.ForeignKey(Comanda, on_delete=models.CASCADE)
+    serviciu = models.ForeignKey(ServiciuIndividual, on_delete=models.CASCADE)
+    cantitate = models.PositiveIntegerField(default=1)
+
+    class Meta:
+        verbose_name_plural = "Servicii din comenzi"
+        constraints = [
+            models.UniqueConstraint(fields=['comanda', 'serviciu'], name='serviciu_unic_in_comanda'),
+            models.CheckConstraint(condition=Q(cantitate__gte=1), name='cantitate_minim_1'),
+        ]
+
+    def __str__(self):
+        return f"{self.cantitate} x {self.serviciu.nume_serviciu} (comanda #{self.comanda_id})"

@@ -195,3 +195,8 @@ MAILERS = {
 }
 
 DEFAULT_FROM_EMAIL = "Da-Boss <cursdjango70@gmail.com>"
+
+AUTH_USER_MODEL = 'aplicatie_agentie_turism.Utilizator'
+LOGIN_URL = 'login'
+
+LANGUAGE_CODE = 'ro'
