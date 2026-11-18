@@ -1,6 +1,14 @@
-{% extends 'aplicatie_agentie_turism/base_utilizatori.html' %}
-{% block titlu %}Profilul meu{% endblock %}
-{% block continut %}
+{% extends 'aplicatie_agentie_turism/baza.html' %}
+
+{% block title %}Profilul meu{% endblock %}
+
+{% block content %}
+<style>
+    .pagina-utilizator { max-width: 700px; margin: 0 auto; background: #fff; padding: 25px 30px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+    .pagina-utilizator table td { padding: 0.3rem 1.5rem 0.3rem 0; }
+    .pagina-utilizator table td:first-child { font-weight: 600; color: #2c3e50; }
+</style>
+<div class="pagina-utilizator">
   <h1>Profilul meu</h1>
   <h2>Date utilizator</h2>
   <table>
@@ -27,4 +35,5 @@
 
   <p><a href="{% url 'editare_date' %}">Modifică datele</a> |
      <a href="{% url 'schimba_parola' %}">Schimbă parola</a></p>
+</div>
 {% endblock %}

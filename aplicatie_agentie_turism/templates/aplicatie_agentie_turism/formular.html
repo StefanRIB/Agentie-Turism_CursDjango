@@ -1,10 +1,23 @@
-{% extends 'aplicatie_agentie_turism/base_utilizatori.html' %}
-{% block titlu %}{{ titlu }}{% endblock %}
-{% block continut %}
-  <h1>{{ titlu }}</h1>
-  <form method="post" novalidate>
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">{{ buton }}</button>
-  </form>
+{% extends 'aplicatie_agentie_turism/baza.html' %}
+
+{% block title %}{{ titlu }}{% endblock %}
+
+{% block content %}
+<style>
+    .pagina-utilizator { max-width: 700px; margin: 0 auto; background: #fff; padding: 25px 30px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+    .pagina-utilizator form p { margin: 0.7rem 0; }
+    .pagina-utilizator label { display: block; font-weight: 600; margin-bottom: 3px; }
+    .pagina-utilizator .errorlist { color: #c0392b; margin: 0 0 4px 0; padding-left: 1.1rem; }
+    .pagina-utilizator .helptext { color: #7f8c8d; font-size: 0.85em; }
+    .pagina-utilizator button[type="submit"] { padding: 9px 20px; background: #1abc9c; color: #fff; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; }
+    .pagina-utilizator button[type="submit"]:hover { background: #16a085; }
+</style>
+<div class="pagina-utilizator">
+    <h1>{{ titlu }}</h1>
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">{{ buton }}</button>
+    </form>
+</div>
 {% endblock %}

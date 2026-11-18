@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Configurația bazei de date
 DB_NAME="django_agentie_turism"
 DB_USER="stefan"
 APP_NAME="aplicatie_agentie_turism" 

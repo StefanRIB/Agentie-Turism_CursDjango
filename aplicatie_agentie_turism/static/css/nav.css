@@ -257,3 +257,23 @@ img {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+nav ul.meniu > li > form.form-logout {
+    margin: 0;
+}
+
+.btn-logout {
+    background: none;
+    border: none;
+    color: #ffffff;
+    font: inherit;
+    font-weight: 500;
+    padding: 12px 15px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+.btn-logout:hover {
+    background-color: #34495e;
+}
