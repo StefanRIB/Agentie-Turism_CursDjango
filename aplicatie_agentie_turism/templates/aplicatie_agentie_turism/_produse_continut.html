@@ -1,0 +1,147 @@
+<!-- Zona pentru tagurile active cu buton "x" -->
+{% if taguri_active_info %}
+    <div style="max-width: 1200px; margin: 0 auto 20px auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <strong style="color: #2d3436; font-size: 1.1em;">Filtre active:</strong>
+        
+        {% for item in taguri_active_info %}
+            <!-- Buton cu numele tagului -->
+            <a href="{{ item.url_eliminare }}" data-fetch style="background: #6c5ce7; color: white; padding: 6px 14px; border-radius: 20px; text-decoration: none; font-size: 0.9em; display: inline-flex; align-items: center; gap: 8px; font-weight: bold; box-shadow: 0 2px 4px rgba(108, 92, 231, 0.3);">
+                #{{ item.nume }} 
+                <span style="background: rgba(0,0,0,0.25); border-radius: 50%; padding: 1px 6px; font-size: 0.85em; transition: background 0.2s;">x</span>
+            </a>
+        {% endfor %}
+        
+        <!-- Buton pentru eliminarea tuturor filtrelor -->
+        <a href="{{ url_baza }}" data-fetch style="color: #d63031; text-decoration: none; font-size: 0.9em; font-weight: bold; margin-left: 10px; text-decoration: underline;">
+            Șterge toate
+        </a>
+    </div>
+{% endif %}
+
+<!-- Sectiunea de paginare -->
+<div style="max-width: 1200px; margin: 20px auto; padding: 15px; background: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+    
+    <div style="font-weight: bold; color: #636e72;">
+        Se afișează produsele între {{ page_obj.start_index }} și {{ page_obj.end_index }} din totalul de {{ page_obj.paginator.count }} produse.
+    </div>
+
+    <div style="display: flex; gap: 15px; align-items: center;">
+        {% if page_obj.has_previous %}
+            <a href="?{% if query_fara_page %}{{ query_fara_page }}&{% endif %}page={{ page_obj.previous_page_number }}" data-fetch
+               style="padding: 6px 12px; background: #6c5ce7; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
+                &laquo; Anterioară
+            </a>
+        {% else %}
+            <span style="padding: 6px 12px; background: #dfe6e9; color: #b2bec3; border-radius: 4px; font-weight: bold; cursor: not-allowed;">
+                &laquo; Anterioară
+            </span>
+        {% endif %}
+
+        <span style="font-weight: bold;">
+            Pagina {{ page_obj.number }} din {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?{% if query_fara_page %}{{ query_fara_page }}&{% endif %}page={{ page_obj.next_page_number }}" data-fetch
+               style="padding: 6px 12px; background: #6c5ce7; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">
+                Următoare &raquo;
+            </a>
+        {% else %}
+            <span style="padding: 6px 12px; background: #dfe6e9; color: #b2bec3; border-radius: 4px; font-weight: bold; cursor: not-allowed;">
+                Următoare &raquo;
+            </span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="grid-produse" style="grid-template-columns: repeat({{ nr_coloane }}, minmax(0, 1fr));">
+    {% for produs in page_obj %}
+        
+        <!-- Folosesc culoarea categoriei pentru chenar, dar o modific cu rosu daca stocul este limitat -->
+        <div class="chenar-produs" 
+            {% if produs.stoc_locuri < stoc_min %}
+                style="border-color: #d63031; box-shadow: 0 4px 10px rgba(214, 48, 49, 0.2);"
+            {% else %}
+                style="border-color: {{ produs.id_categorie.culoare|default:'#dfe6e9' }};"
+            {% endif %}>
+            
+            <div>
+                <a href="{% url 'produse_categorie' produs.id_categorie.nume %}" 
+                   class="badge-categorie" 
+                   style="background-color: {{ produs.id_categorie.culoare|default:'#6c5ce7' }}; text-decoration: none;">
+                    
+                    {% if produs.id_categorie.sigla %}
+                        <i class="{{ produs.id_categorie.sigla }}" style="margin-right: 4px;"></i>
+                    {% endif %}
+                    
+                    {{ produs.id_categorie.nume }}
+                </a>
+
+                <!-- Afisarea imaginii -->
+                {% if produs.imagine %}
+                    <img src="{{ produs.imagine.url }}" alt="{{ produs.nume_serviciu }}" class="imagine-produs">
+                {% else %}
+                    <img src="data:image/svg+xml;utf8,
+                    <svg xmlns='http://www.w3.org/2000/svg' width='400' height='250' viewBox='0 0 400 250'>
+                    <rect width='100%25' height='100%25' fill='%23dfe6e9'/>
+                    <text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23636e72' 
+                    font-family='Arial, sans-serif' font-size='20' font-weight='bold'>Imagine indisponibilă</text></svg>" 
+                        alt="Imagine indisponibilă" 
+                        class="imagine-produs">
+                {% endif %}
+
+                <h3 class="nume-produs">
+                    <a href="{{ produs.get_absolute_url }}" style="text-decoration: none; color: #2d3436;">
+                        {{ produs.nume_serviciu }}
+                    </a>
+                </h3>
+
+                <!-- Marcaj vizual pentru STOC LIMITAT -->
+                {% if produs.stoc_locuri < stoc_min %}
+                    <p style="color: #d63031; font-weight: bold; font-size: 0.9em; margin: 5px 0;">
+                        ⚠️ Stoc limitat (doar {{ produs.stoc_locuri }} locuri rămase)!
+                    </p>
+                {% endif %}
+
+                <p class="specificatii-produs"><strong>Facilități:</strong> {{ produs.facilitati_incluse }}</p>
+                <p class="specificatii-produs"><strong>Rating:</strong> ⭐ {{ produs.rating }} / 5.0</p>
+            </div>
+
+            <div>
+                <!-- Lista de Taguri -->
+                <div style="margin: 10px 0; display: flex; flex-wrap: wrap; gap: 6px;">
+                    {% for tag in produs.taguri %}
+                        
+                        {% if tag in taguri_active %}
+                            {% for info in taguri_active_info %}
+                                {% if info.nume == tag %}
+                                    <a href="{{ info.url_eliminare }}" data-fetch
+                                       style="text-decoration: none; padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; color: #fff; background-color: #d63031;" 
+                                       title="Elimină acest filtru">
+                                        #{{ tag }} ✖
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                            
+                        {% else %}
+                            <a href="?{% if query_curent %}{{ query_curent }}&{% endif %}tag={{ tag }}" data-fetch
+                               style="text-decoration: none; padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; color: #2d3436; background-color: #dfe6e9;" 
+                               title="Adaugă la filtre">
+                                #{{ tag }}
+                            </a>
+                        {% endif %}
+                        
+                    {% endfor %}
+                </div>
+
+                <div class="pret-produs">
+                    Preț: {{ produs.pret_serviciu }} EUR
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <p class="fara-rezultate" style="text-align: center; grid-column: 1 / -1;">
+            {% if filtrat or taguri_active %}Nu există produse care să corespundă filtrelor selectate.{% else %}Momentan nu există produse înregistrate.{% endif %}
+        </p>
+    {% endfor %}
+</div>

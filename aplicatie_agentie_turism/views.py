@@ -10,8 +10,23 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
-from .forms import InregistrareForm, LoginForm, EditareDateForm
-from .models import Profil, Utilizator
+from decimal import Decimal
+
+from django.contrib.auth.decorators import user_passes_test
+from django.http import FileResponse, Http404, JsonResponse
+from django.template.loader import render_to_string
+from django.utils.cache import add_never_cache_headers, patch_vary_headers
+from django.utils.safestring import mark_safe
+
+from .forms import (
+    InregistrareForm, LoginForm, EditareDateForm, ContactForm, FiltrareProduseForm, ProdusForm,
+    IMPLICIT_COLOANE, IMPLICIT_PE_PAGINA,
+)
+from .mesaje_contact import (
+    RE_NUME_IMAGINE, RADACINA, asigura_foldere_departamente, departament_dupa_folder,
+    incarca_mesaje, nume_folder, pregateste_date, salveaza_mesaj,
+)
+from .models import Profil, Utilizator, Departament
 
 def trimite_email():
     send_mail(
@@ -302,29 +317,89 @@ def servicii_turism(request):
         messages.error(request, "Numărul de pagină introdus în URL este invalid. Te rugăm să folosești butoanele de navigare.")
     return render(request, 'aplicatie_agentie_turism/servicii_turism.html', {'pagina': obPagina})
 
+def _filtreaza_produse(produse, d, taguri_url):
+    """Aplica pe QuerySet filtrele din formular"""
+    if d.get('nume'):
+        produse = produse.filter(nume_serviciu__icontains=d['nume'])
+    if d.get('facilitati'):
+        produse = produse.filter(facilitati_incluse__icontains=d['facilitati'])
+    if d.get('pret_min') is not None:
+        produse = produse.filter(pret_serviciu__gte=d['pret_min'])
+    if d.get('pret_max') is not None:
+        produse = produse.filter(pret_serviciu__lte=d['pret_max'])
+    if d.get('rating_min') is not None:
+        produse = produse.filter(rating__gte=d['rating_min'])
+    if d.get('rating_max') is not None:
+        produse = produse.filter(rating__lte=d['rating_max'])
+    if d.get('stoc_min') is not None:
+        produse = produse.filter(stoc_locuri__gte=d['stoc_min'])
+    if d.get('stoc_max') is not None:
+        produse = produse.filter(stoc_locuri__lte=d['stoc_max'])
+    if d.get('activ') == 'da':
+        produse = produse.filter(este_activ=True)
+    elif d.get('activ') == 'nu':
+        produse = produse.filter(este_activ=False)
+    if d.get('prestat_de_la'):
+        produse = produse.filter(data_prestare__gte=d['prestat_de_la'])
+    if d.get('prestat_pana_la'):
+        produse = produse.filter(data_prestare__lte=d['prestat_pana_la'])
+    if d.get('adaugat_de_la'):
+        produse = produse.filter(data_adaugare__date__gte=d['adaugat_de_la'])
+    if d.get('adaugat_pana_la'):
+        produse = produse.filter(data_adaugare__date__lte=d['adaugat_pana_la'])
+    if d.get('categorie'):
+        produse = produse.filter(id_categorie=d['categorie'])
+    if d.get('furnizor'):
+        produse = produse.filter(id_furnizor=d['furnizor'])
+    taguri = list(dict.fromkeys(list(d.get('taguri') or []) + taguri_url))
+    if taguri:
+        produse = produse.filter(taguri__contains=taguri)
+    return produse
+
+
 def lista_produse(request, nume_categorie=None):
-    
-    # Verific daca ma aflu pe o pagina aferenta unei categorii
+    # Pagina unei categorii sau pagina tuturor produselor
     if nume_categorie:
         categorie_curenta = get_object_or_404(CategorieServiciu, nume=nume_categorie)
-        produse = ServiciuIndividual.objects.select_related('id_categorie').filter(id_categorie=categorie_curenta)
     else:
         categorie_curenta = None
-        produse = ServiciuIndividual.objects.select_related('id_categorie').all()
+    produse = ServiciuIndividual.objects.select_related('id_categorie')
+    if categorie_curenta:
+        produse = produse.filter(id_categorie=categorie_curenta)
 
-    # Cod pentru sortare si filtrare dupa taguri
-    col_param = request.GET.get('col', 'nume') 
-    sort_param = request.GET.get('sort', 'a')  
+    # Formularul se considera trimis daca in URL apare vreunul din campurile lui
+    campuri_form = set(FiltrareProduseForm.base_fields)
+    trimis = any(k in request.GET for k in campuri_form)
+    date_form = request.GET.copy()
+    if categorie_curenta and 'categorie' not in date_form:
+        date_form['categorie'] = categorie_curenta.nume     
+    form = FiltrareProduseForm(date_form if trimis else None, categorie_curenta=categorie_curenta)
+
+    valid = True
+    if trimis:
+        valid = form.is_valid()
+        # verificare server: categoria de pe pagina nu poate fi schimbata din browser
+        if categorie_curenta and 'categorie' in form.cleaned_data:
+            ales = form.cleaned_data['categorie']
+            if ales != categorie_curenta:
+                valid = False
+                form.add_error('categorie', 'Categoria nu poate fi modificată pe această pagină.')
+                messages.error(
+                    request, 'Valoarea categoriei a fost modificată manual. '
+                             'Se afișează produsele categoriei curente, fără filtre.')
+        if not valid:
+            messages.error(request, 'Filtrele conțin erori. Corectați-le și încercați din nou.')
+
+    date = form.cleaned_data if (trimis and valid) else {}
+    col_param = date.get('col') or request.GET.get('col') or 'nume'
+    sort_param = date.get('sort') or request.GET.get('sort') or 'a'
     coloane_permise = {'nume': 'nume_serviciu', 'pret': 'pret_serviciu', 'rating': 'rating'}
     camp_sortare = coloane_permise.get(col_param, 'nume_serviciu')
     if sort_param == 'd':
         camp_sortare = f"-{camp_sortare}"
 
     taguri_active = list(dict.fromkeys(request.GET.getlist('tag')))
-    if taguri_active:
-        produse = produse.filter(taguri__contains=taguri_active)
-
-    produse = produse.order_by(camp_sortare)
+    produse = _filtreaza_produse(produse, date, taguri_active).order_by(camp_sortare)
 
     taguri_active_info = []
     for tag in taguri_active:
@@ -336,10 +411,18 @@ def lista_produse(request, nume_categorie=None):
 
     query_curent = request.GET.urlencode()
 
-    # Cod pentru paginare
-    paginator = Paginator(produse, settings.PROD_PER_PAG)
-    numar_pagina = request.GET.get('page')
-    page_obj = paginator.get_page(numar_pagina)
+    # Paginare: numarul de produse pe pagina (din formular)
+    nr_pe_pagina = date.get('nr_pe_pagina') or IMPLICIT_PE_PAGINA
+    nr_coloane = date.get('nr_coloane') or IMPLICIT_COLOANE
+    if valid:   
+        anterior = request.session.get('nr_pe_pagina', IMPLICIT_PE_PAGINA)
+        if anterior != nr_pe_pagina:
+            messages.warning(
+                request, 'Ați schimbat numărul de produse pe pagină. În urma repaginării este posibil '
+                         'să fi sărit peste unele produse sau să le revedeți pe cele deja vizualizate.')
+        request.session['nr_pe_pagina'] = nr_pe_pagina
+    paginator = Paginator(produse, nr_pe_pagina)
+    page_obj = paginator.get_page(request.GET.get('page'))
 
     params = request.GET.copy()
     if 'page' in params:
@@ -347,7 +430,10 @@ def lista_produse(request, nume_categorie=None):
     query_fara_page = params.urlencode()
 
     context = {
+        'form': form,
+        'filtrat': trimis and valid,
         'page_obj': page_obj,
+        'nr_coloane': nr_coloane,
         'col_curent': col_param,
         'sort_curent': sort_param,
         'stoc_min': settings.STOC_MIN,
@@ -355,10 +441,24 @@ def lista_produse(request, nume_categorie=None):
         'taguri_active_info': taguri_active_info,
         'query_curent': query_curent,
         'query_fara_page': query_fara_page,
-        'categorie_curenta': categorie_curenta, 
+        'categorie_curenta': categorie_curenta,
+        'url_baza': request.path,
     }
-    
+
+    # Bonus: cererile trimise cu fetch primesc doar partile care se schimba (JSON)
+    if request.headers.get('X-Requested-With') == 'fetch':
+        raspuns = JsonResponse({
+            'formular': render_to_string(
+                'aplicatie_agentie_turism/_filtrare_form.html', context, request=request),
+            'continut': render_to_string(
+                'aplicatie_agentie_turism/_produse_continut.html', context, request=request),
+            'mesaje': [{'text': str(m), 'tip': m.tags} for m in messages.get_messages(request)],
+        })
+        patch_vary_headers(raspuns, ('X-Requested-With',))   
+        add_never_cache_headers(raspuns)
+        return raspuns
     return render(request, 'aplicatie_agentie_turism/lista_produse.html', context)
+
 
 def detalii_produs(request, pk):
     # Tratez cazul în care se accesează un produs inexistent
@@ -389,7 +489,7 @@ O_ZI = 24 * 60 * 60  # secunde
 
 
 def _log_accesare(request):
-    """Inregistreaza accesarea in istoric, la fel ca celelalte pagini ale site-ului."""
+    """Inregistreaza accesarea in istoric"""
     return Accesare(
         ip_client=get_ip(request),
         url=request.get_full_path(),
@@ -398,7 +498,7 @@ def _log_accesare(request):
 
 
 def _salveaza_in_sesiune(request, utilizator):
-    """Memoreaza in sesiune datele utilizatorului si ale profilului (valori serializabile JSON)."""
+    """Memoreaza in sesiune datele utilizatorului si ale profilului"""
     profil = Profil.objects.filter(utilizator=utilizator).first()
     request.session['date_utilizator'] = {
         'username': utilizator.username,
@@ -501,4 +601,105 @@ def schimba_parola_view(request):
         return redirect('profil')
     return render(request, 'aplicatie_agentie_turism/formular.html', {
         'titlu': 'Schimbă parola', 'form': form, 'buton': 'Schimbă parola',
+    })
+
+
+
+
+# Task 3 / lab. 5: pagina de contact 
+def contact(request):
+    _log_accesare(request)
+    if request.method == 'POST':
+        form = ContactForm(request.POST, request.FILES)
+        if form.is_valid():
+            date_mesaj, imagini = pregateste_date(form.cleaned_data, form.tip_ales(), get_ip(request))
+            salveaza_mesaj(date_mesaj, imagini)
+            messages.success(
+                request, 'Mesajul a fost trimis. Veți primi un răspuns în numărul de zile precizat.')
+            if date_mesaj['urgent']:
+                messages.info(request, 'Mesajul a fost marcat ca urgent.')
+            return redirect('contact')
+        messages.error(request, 'Mesajul nu a fost trimis: formularul conține erori.')
+    else:
+        form = ContactForm()
+    return render(request, 'aplicatie_agentie_turism/contact.html', {
+        'form': form,
+        'mapare': form.mapare_departamente(),
+    })
+
+
+def _este_personal(user):
+    return user.is_authenticated and user.is_staff
+
+@user_passes_test(_este_personal, login_url='login')
+def mesaje(request, departament=None, an=None, luna=None, zi=None):
+    """/mesaje/<departament>/<an>/<luna>/<zi>/ - luna si ziua sunt optionale."""
+    _log_accesare(request)
+    asigura_foldere_departamente()
+    if departament is None:
+        return render(request, 'aplicatie_agentie_turism/mesaje.html', {
+            'departamente': [(d.nume_departament, nume_folder(d.nume_departament))
+                             for d in Departament.objects.filter(
+                                 tipuri_mesaje__isnull=False).distinct().order_by('nume_departament')],
+        })
+    dep = departament_dupa_folder(departament)
+    if dep is None:
+        raise Http404('Departament inexistent.')
+    if luna is not None and not 1 <= luna <= 12:
+        raise Http404('Lună invalidă.')
+    if zi is not None and not 1 <= zi <= 31:
+        raise Http404('Zi invalidă.')
+
+    lista = []
+    for m in incarca_mesaje(dep, an, luna, zi):
+        # afisare independenta de numarul si numele campurilor din JSON
+        campuri = []
+        for cheie, valoare in m.items():
+            if cheie.startswith('_'):
+                continue
+            if cheie == 'mesaj':
+                valoare = mark_safe(valoare)          # HTML generat (si escapat) la salvare
+            elif cheie == 'imagini':
+                pass                                  # lista de fisiere: sablonul afiseaza miniaturi
+            elif isinstance(valoare, bool):
+                valoare = 'Da' if valoare else 'Nu'
+            elif isinstance(valoare, list):
+                valoare = ', '.join(str(x) for x in valoare) or '–'
+            elif valoare in (None, ''):
+                valoare = '–'
+            campuri.append((cheie.replace('_', ' ').capitalize(), cheie, valoare))
+        lista.append({'campuri': campuri, 'urgent': m.get('urgent'), 'tip': m.get('tip_mesaj', '')})
+    perioada = '/'.join(str(x) for x in (an, luna, zi) if x is not None)
+    return render(request, 'aplicatie_agentie_turism/mesaje.html', {
+        'departament': dep, 'folder': departament, 'mesaje': lista, 'perioada': perioada,
+    })
+
+
+@user_passes_test(_este_personal, login_url='login')
+def imagine_mesaj(request, departament, nume):
+    if not RE_NUME_IMAGINE.match(nume) or departament_dupa_folder(departament) is None:
+        raise Http404()
+    cale = RADACINA / departament / nume
+    if not cale.is_file():
+        raise Http404()
+    return FileResponse(open(cale, 'rb'))
+
+
+# Task 4 / lab. 5: formular de adaugare produse 
+@login_required
+def adauga_produs(request):
+    _log_accesare(request)
+    form = ProdusForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        produs = form.save(commit=False)          # preiau inputurile aditionale inainte de salvare
+        achizitie = form.cleaned_data['pret_achizitie']
+        adaos = form.cleaned_data['adaos_comercial']
+        produs.pret_serviciu = (achizitie * (1 + adaos / Decimal(100))).quantize(Decimal('0.01'))
+        produs.save()
+        form.save_m2m()
+        messages.success(
+            request, f'Serviciul „{produs.nume_serviciu}” a fost adăugat, la prețul de {produs.pret_serviciu} EUR.')
+        return redirect(produs.get_absolute_url())
+    return render(request, 'aplicatie_agentie_turism/formular.html', {
+        'titlu': 'Adaugă un serviciu', 'form': form, 'buton': 'Adaugă serviciul',
     })

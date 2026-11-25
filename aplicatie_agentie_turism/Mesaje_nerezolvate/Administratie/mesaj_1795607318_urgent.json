@@ -1,0 +1,20 @@
+{
+  "nume": "Popescu",
+  "prenume": "Maria",
+  "cnp": "6050812123455",
+  "email": "mariapopescu@yahoo.com",
+  "telefon": "+40712345678",
+  "tip_mesaj": "cerere",
+  "departament": "Administrație",
+  "subiect": "Cerere Asistenta Speciala Zbor",
+  "zile_asteptare": 4,
+  "mesaj": "<p>Buna ziua!</p><p>Solicit asistenta speciala pe durata zborului Bucuresti - Sicilia din 5 februarie 2027.</p><p>Va multumesc!</p><p>Popescu</p>",
+  "gdpr": true,
+  "cod_cerere": "VPH-187433-D",
+  "varsta": "21 de ani și 3 luni",
+  "urgent": true,
+  "ip": "127.0.0.1",
+  "data_sosire": "2026-11-25T11:48:38",
+  "timestamp": 1795607318,
+  "imagini": []
+}

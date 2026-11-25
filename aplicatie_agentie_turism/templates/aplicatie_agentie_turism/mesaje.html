@@ -1,0 +1,63 @@
+{% extends 'aplicatie_agentie_turism/baza.html' %}
+
+{% block title %}Mesaje nerezolvate{% endblock %}
+
+{% block content %}
+<style>
+    .pagina-mesaje { max-width: 1000px; margin: 30px auto; padding: 0 20px; }
+    .lista-departamente a { display: inline-block; margin: 5px 8px 5px 0; padding: 8px 14px; background: #6c5ce7; color: #fff; border-radius: 6px; text-decoration: none; font-weight: bold; }
+    .mesaj-primit { background: #fff; border: 2px solid #dfe6e9; border-left-width: 8px; border-radius: 8px; padding: 14px 18px; margin: 16px 0; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+    .mesaj-primit.urgent { border: 3px solid #d63031; border-left-width: 10px; background: #fff5f5; }
+    .mesaj-primit.tip-reclamatie { border-left-color: #d63031; }
+    .mesaj-primit.tip-intrebare { border-left-color: #0984e3; }
+    .mesaj-primit.tip-review { border-left-color: #fdcb6e; }
+    .mesaj-primit.tip-cerere { border-left-color: #6c5ce7; }
+    .mesaj-primit.tip-programare { border-left-color: #00b894; }
+    .eticheta-tip { display: inline-block; padding: 3px 10px; border-radius: 12px; color: #fff; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; margin-right: 6px; }
+    .tip-reclamatie .eticheta-tip { background: #d63031; } .tip-intrebare .eticheta-tip { background: #0984e3; }
+    .tip-review .eticheta-tip { background: #e1a100; } .tip-cerere .eticheta-tip { background: #6c5ce7; }
+    .tip-programare .eticheta-tip { background: #00b894; }
+    .eticheta-urgent { background: #d63031; color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; }
+    .mesaj-primit table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    .mesaj-primit th { text-align: left; width: 28%; vertical-align: top; color: #636e72; padding: 4px 8px; }
+    .mesaj-primit td { padding: 4px 8px; }
+    .mesaj-primit td p { margin: 0 0 6px; }
+    .mesaj-primit img { max-height: 120px; margin: 4px 6px 0 0; border-radius: 4px; }
+</style>
+
+<div class="pagina-mesaje">
+{% if departament %}
+    <h1>Mesaje – {{ departament.nume_departament }}{% if perioada %} ({{ perioada }}){% endif %}</h1>
+    <p><a href="{% url 'mesaje' %}">&larr; Toate departamentele</a></p>
+
+    {% for m in mesaje %}
+        <div class="mesaj-primit tip-{{ m.tip }}{% if m.urgent %} urgent{% endif %}">
+            <span class="eticheta-tip">{{ m.tip }}</span>{% if m.urgent %}<span class="eticheta-urgent">URGENT</span>{% endif %}
+            <table>
+                {% for eticheta, cheie, valoare in m.campuri %}
+                    <tr>
+                        <th>{{ eticheta }}</th>
+                        <td>
+                            {% if cheie == 'imagini' %}
+                                {% for nume in valoare %}<a href="{% url 'imagine_mesaj' folder nume %}" target="_blank"><img src="{% url 'imagine_mesaj' folder nume %}" alt="{{ nume }}"></a>{% empty %}–{% endfor %}
+                            {% else %}{{ valoare }}{% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    {% empty %}
+        <p>Nu există mesaje pentru acest departament în perioada selectată.</p>
+    {% endfor %}
+{% else %}
+    <h1>Mesaje nerezolvate</h1>
+    <p>Alegeți un departament. Puteți restrânge lista adăugând în adresă anul, luna și ziua:
+       <code>/mesaje/&lt;departament&gt;/2026/</code>, <code>/2026/11/</code> sau <code>/2026/11/25/</code>.</p>
+    <div class="lista-departamente">
+        {% for nume, folder in departamente %}
+            <a href="{% url 'mesaje_departament' folder %}">{{ nume }}</a>
+        {% endfor %}
+    </div>
+{% endif %}
+</div>
+{% endblock %}

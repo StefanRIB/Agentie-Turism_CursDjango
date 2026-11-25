@@ -1,0 +1,20 @@
+{
+  "nume": "Baicoianu",
+  "prenume": "Stefan-Teodor",
+  "cnp": "5061105061234",
+  "email": "stefanbaicoianu@gmail.com",
+  "telefon": "+40712345678",
+  "tip_mesaj": "intrebare",
+  "departament": "Programări",
+  "subiect": "Excursie Italia",
+  "zile_asteptare": 2,
+  "mesaj": "<p>Buna ziua!</p><p>Care este urmatoarea excursie catre Italia?</p><p>Va multumesc!</p><p>Baicoianu</p>",
+  "gdpr": true,
+  "cod_cerere": "MMK-941780-B",
+  "varsta": "20 de ani și 0 luni",
+  "urgent": true,
+  "ip": "127.0.0.1",
+  "data_sosire": "2026-11-25T11:20:58",
+  "timestamp": 1795605658,
+  "imagini": []
+}

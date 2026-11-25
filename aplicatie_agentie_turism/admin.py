@@ -4,6 +4,7 @@ from django.utils.html import format_html
 from .models import (
     Ambalaj, CategorieServiciu, Furnizor, ServiciuIndividual, PachetSejur, PunctIntalnire,
     Utilizator, Profil, Departament, Angajat, Voucher, Review, Intrebare, Comanda, ComandaServiciu,
+    TipMesaj,
 )
 
 @admin.action(description='Activează serviciile selectate')
@@ -169,6 +170,15 @@ admin.site.register(Review, ReviewAdmin)
 admin.site.register(Intrebare, IntrebareAdmin)
 admin.site.register(Comanda, ComandaAdmin)
 
+
+class TipMesajAdmin(admin.ModelAdmin):
+    list_display = ('nume', 'cod', 'zile_minime')
+    filter_horizontal = ('departamente',)
+    search_fields = ('nume', 'cod')
+    search_help_text = "Căutați tipul de mesaj după nume sau cod."
+
+
+admin.site.register(TipMesaj, TipMesajAdmin)
 admin.site.site_header = "Administrare Zbor & Dor"        
 admin.site.site_title = "Admin Zbor & Dor"                
 admin.site.index_title = "Panou de Control Agenție"       

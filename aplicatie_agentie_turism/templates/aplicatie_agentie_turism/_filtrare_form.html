@@ -1,0 +1,27 @@
+<form id="form-filtrare" method="get" action="{{ url_baza }}" novalidate>
+    {% for tag in taguri_active %}<input type="hidden" name="tag" value="{{ tag }}">{% endfor %}
+
+    {% if form.non_field_errors %}
+        <div class="eroare-generala">{% for e in form.non_field_errors %}<div>{{ e }}</div>{% endfor %}</div>
+    {% endif %}
+
+    <div class="grila-filtre">
+        {% for field in form %}
+            {% if field.is_hidden %}
+                {{ field }}
+                {% for e in field.errors %}<div class="eroare-generala">{{ e }}</div>{% endfor %}
+            {% else %}
+                <div class="camp-filtru">
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {% for e in field.errors %}<small class="eroare-camp">{{ e }}</small>{% endfor %}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <div class="butoane-filtre">
+        <button type="submit">Aplică filtrele</button>
+        <a id="btn-reset" class="btn-reset-filtre" href="{{ url_baza }}">Resetează filtrele</a>
+    </div>
+</form>

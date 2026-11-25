@@ -1,0 +1,130 @@
+{% extends 'aplicatie_agentie_turism/baza.html' %}
+{% load static %}
+
+{% block title %}Contact - Zbor & Dor{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/contact.css' %}">
+
+<div class="pagina-contact">
+    <h1>Contactați-ne</h1>
+    <p class="intro-contact">Trimiteți-ne un mesaj și îl vom redirecționa către departamentul potrivit.</p>
+
+    <form id="form-contact" method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        {{ form.cod_cerere }}
+        {% for e in form.cod_cerere.errors %}<p class="eroare-camp">{{ e }}</p>{% endfor %}
+        {% for e in form.non_field_errors %}<p class="eroare-camp">{{ e }}</p>{% endfor %}
+
+        <div class="rand-contact">
+            <div class="camp-contact">
+                {{ form.nume.label_tag }} {{ form.nume }}
+                {% for e in form.nume.errors %}<p class="eroare-camp">{{ e }}</p>{% endfor %}
+            </div>
+            <div class="camp-contact">
+                {{ form.prenume.label_tag }} {{ form.prenume }}
+                <small class="ajutor">{{ form.prenume.help_text }}</small>
+                {% for e in form.prenume.errors %}<p class="eroare-camp">{{ e }}</p>{% endfor %}
+            </div>
+        </div>
+
+        <div class="rand-contact">
+            <div class="camp-contact">
+                {{ form.cnp.label_tag }} {{ form.cnp }}
+                <small class="ajutor">Cifre introduse: <strong id="contor-cnp">0</strong> / 13</small>
+                {% for e in form.cnp.errors %}<p class="eroare-camp">{{ e }}</p>{% endfor %}
+            </div>
+        </div>
+
+        <div class="rand-contact">
+            <div class="camp-contact">
+                {{ form.data_nasterii.label_tag }} {{ form.data_nasterii }}
+                {% for e in form.data_nasterii.errors %}<p class="eroare-camp">{{ e }}</p>{% endfor %}
+            </div>
+        </div>
+
+        <div class="rand-contact">
+            <div class="camp-contact">
+                {{ form.email.label_tag }} {{ form.email }}
+                {% for e in form.email.errors %}<p class="eroare-camp">{{ e }}</p>{% endfor %}
+            </div>
+            <div class="camp-contact">
+                {{ form.confirmare_email.label_tag }} {{ form.confirmare_email }}
+                {% for e in form.confirmare_email.errors %}<p class="eroare-camp">{{ e }}</p>{% endfor %}
+            </div>
+        </div>
+
+        <div class="rand-contact">
+            <div class="camp-contact">
+                {{ form.telefon.label_tag }} {{ form.telefon }}
+                <small class="ajutor">{{ form.telefon.help_text }}</small>
+                {% for e in form.telefon.errors %}<p class="eroare-camp">{{ e }}</p>{% endfor %}
+            </div>
+        </div>
+
+        <div class="rand-contact">
+            <div class="camp-contact">
+                {{ form.tip_mesaj.label_tag }} {{ form.tip_mesaj }}
+                {% for e in form.tip_mesaj.errors %}<p class="eroare-camp">{{ e }}</p>{% endfor %}
+            </div>
+            <div class="camp-contact">
+                {{ form.departament.label_tag }} {{ form.departament }}
+                {% for e in form.departament.errors %}<p class="eroare-camp">{{ e }}</p>{% endfor %}
+            </div>
+        </div>
+
+        <div class="rand-contact">
+            <div class="camp-contact camp-lat">
+                {{ form.subiect.label_tag }} {{ form.subiect }}
+                {% for e in form.subiect.errors %}<p class="eroare-camp">{{ e }}</p>{% endfor %}
+            </div>
+        </div>
+
+        <div class="rand-contact">
+            <div class="camp-contact camp-lat">
+                {{ form.zile_asteptare.label_tag }} {{ form.zile_asteptare }}
+                <small class="ajutor">{{ form.zile_asteptare.help_text }}</small>
+                {% for e in form.zile_asteptare.errors %}<p class="eroare-camp">{{ e }}</p>{% endfor %}
+            </div>
+        </div>
+
+        <div class="rand-contact">
+            <div class="camp-contact camp-lat">
+                {{ form.mesaj.label_tag }} {{ form.mesaj }}
+                {% for e in form.mesaj.errors %}<p class="eroare-camp">{{ e }}</p>{% endfor %}
+            </div>
+        </div>
+
+        <div class="rand-contact" id="zona-imagini">
+            <div class="camp-contact camp-imagine">
+                {{ form.imagine_1.label_tag }} {{ form.imagine_1 }}
+                {% for e in form.imagine_1.errors %}<p class="eroare-camp">{{ e }}</p>{% endfor %}
+            </div>
+            <div class="camp-contact camp-imagine" hidden>
+                {{ form.imagine_2.label_tag }} {{ form.imagine_2 }}
+                {% for e in form.imagine_2.errors %}<p class="eroare-camp">{{ e }}</p>{% endfor %}
+            </div>
+            <div class="camp-contact camp-imagine" hidden>
+                {{ form.imagine_3.label_tag }} {{ form.imagine_3 }}
+                {% for e in form.imagine_3.errors %}<p class="eroare-camp">{{ e }}</p>{% endfor %}
+            </div>
+            <p id="mesaj-imagini" class="mesaj-max-imagini" hidden>Ați atins numărul maxim de imagini (3).</p>
+        </div>
+
+        <div class="rand-contact">
+            <div class="camp-contact camp-lat camp-gdpr">
+                <label>{{ form.gdpr }} {{ form.gdpr.label }}</label>
+                {% for e in form.gdpr.errors %}<p class="eroare-camp">{{ e }}</p>{% endfor %}
+            </div>
+        </div>
+
+        <div class="rand-contact butoane-contact">
+            <button type="submit" id="btn-trimite" disabled>Trimite mesajul</button>
+            <button type="reset" id="btn-reseteaza">Resetează</button>
+        </div>
+    </form>
+</div>
+
+{{ mapare|json_script:"mapare-departamente" }}
+<script src="{% static 'js/contact.js' %}"></script>
+{% endblock %}

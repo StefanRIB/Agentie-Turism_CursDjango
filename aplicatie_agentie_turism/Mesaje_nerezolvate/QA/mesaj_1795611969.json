@@ -1,0 +1,22 @@
+{
+  "nume": "Ionescu",
+  "prenume": "Daria",
+  "cnp": "6041212123456",
+  "email": "ionescudaria@gmail.com",
+  "telefon": "+40712345678",
+  "tip_mesaj": "review",
+  "departament": "QA",
+  "subiect": "Plimbare pe apa din Napoli catre Palermo",
+  "zile_asteptare": 30,
+  "mesaj": "<p>Am ramas impresionata de cat de frumos a fost drumul pe apa intre Napoli si Palermo! Las atasata o imagine cu superbul peisaj!</p><p>Ionescu</p>",
+  "gdpr": true,
+  "cod_cerere": "SPH-870594-F",
+  "varsta": "21 de ani și 11 luni",
+  "urgent": false,
+  "ip": "127.0.0.1",
+  "data_sosire": "2026-11-25T13:06:09",
+  "timestamp": 1795611969,
+  "imagini": [
+    "mesaj_1795611969_img1.jpg"
+  ]
+}

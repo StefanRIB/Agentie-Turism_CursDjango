@@ -342,3 +342,30 @@ class ComandaServiciu(models.Model):
 
     def __str__(self):
         return f"{self.cantitate} x {self.serviciu.nume_serviciu} (comanda #{self.comanda_id})"
+
+# LABORATOR 5 - PAGINA DE CONTACT (task 3) 
+# Tipurile de mesaje; legatura cu departamentele se face prin tabela
+# aplicatie_agentie_turism_tipmesaj_departamente (creata automat de ManyToManyField).
+class TipMesaj(models.Model):
+    cod = models.CharField(max_length=30, unique=True, help_text="Valoarea trimisă de formular (ex: reclamatie).")
+    nume = models.CharField(max_length=60)
+    zile_minime = models.PositiveIntegerField(
+        help_text="Numărul minim de zile de așteptare acceptat pentru acest tip de mesaj."
+    )
+    departamente = models.ManyToManyField(
+        Departament, related_name='tipuri_mesaje',
+        help_text="Departamentele către care poate fi trimis acest tip de mesaj."
+    )
+
+    class Meta:
+        ordering = ['id']
+        verbose_name_plural = "Tipuri de mesaje"
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(zile_minime__gte=1) & Q(zile_minime__lte=30),
+                name='zile_minime_1_30'
+            )
+        ]
+
+    def __str__(self):
+        return self.nume
